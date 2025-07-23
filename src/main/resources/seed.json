@@ -1,0 +1,46 @@
+{
+  "trainees": [
+    {
+      "firstName": "Luka",
+      "lastName": "Japaridze",
+      "dateOfBirth": "1997-04-21",
+      "address": "Tbilisi, Georgia"
+    },
+    {
+      "firstName": "Ana",
+      "lastName": "Beridze",
+      "dateOfBirth": "2000-09-13",
+      "address": "Batumi, Georgia"
+    }
+  ],
+  "trainers": [
+    {
+      "firstName": "Nino",
+      "lastName": "Gigauri",
+      "specialization": "Strength Training"
+    },
+    {
+      "firstName": "Sandro",
+      "lastName": "Mchedlishvili",
+      "specialization": "Yoga"
+    }
+  ],
+  "trainings": [
+    {
+      "traineeId": 1,
+      "trainerId": 1,
+      "trainingName": "Upper Body Workout",
+      "trainingType": "Strength",
+      "trainingDate": "2024-08-01",
+      "trainingDurationMinutes": 60
+    },
+    {
+      "traineeId": 2,
+      "trainerId": 2,
+      "trainingName": "Morning Yoga",
+      "trainingType": "Flexibility",
+      "trainingDate": "2024-08-02",
+      "trainingDurationMinutes": 45
+    }
+  ]
+}
