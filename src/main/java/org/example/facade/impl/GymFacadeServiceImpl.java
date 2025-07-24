@@ -1,5 +1,6 @@
 package org.example.facade.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.example.entity.Trainee;
 import org.example.entity.Trainer;
 import org.example.entity.Training;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@RequiredArgsConstructor
 @Service
 public class GymFacadeServiceImpl implements GymFacadeService {
 
@@ -22,16 +24,7 @@ public class GymFacadeServiceImpl implements GymFacadeService {
     private final TrainerService trainerService;
     private final TrainingService trainingService;
 
-
-    public GymFacadeServiceImpl(
-            TraineeService traineeService,
-            TrainerService trainerService,
-            TrainingService trainingService) {
-        this.traineeService = traineeService;
-        this.trainerService = trainerService;
-        this.trainingService = trainingService;
-        logger.info("GymFacadeService initialized with core services.");
-    }
+    // Create
 
     @Override
     public Trainee registerTrainee(String firstName, String lastName, String dob, String address) {
@@ -51,6 +44,8 @@ public class GymFacadeServiceImpl implements GymFacadeService {
         return trainingService.createTraining(traineeId, trainerId, name, type, date, duration);
     }
 
+    // Read
+
     @Override
     public List<Trainee> getAllTrainees() {
         return traineeService.getAllTrainee();
@@ -64,5 +59,45 @@ public class GymFacadeServiceImpl implements GymFacadeService {
     @Override
     public List<Training> getAllTrainings() {
         return trainingService.getAllTrainings();
+    }
+
+    // Update
+
+    @Override
+    public void updateTrainee(Trainee trainee) {
+        logger.info("Facade: Updating trainee ID={}", trainee.getId());
+        traineeService.updateTrainee(trainee);
+    }
+
+    @Override
+    public void updateTrainer(Trainer trainer) {
+        logger.info("Facade: Updating trainer ID={}", trainer.getId());
+        trainerService.updateTrainer(trainer);
+    }
+
+    @Override
+    public void updateTraining(Training training) {
+        logger.info("Facade: Updating training ID={}", training.getId());
+        trainingService.updateTraining(training);
+    }
+
+    // Delete
+
+    @Override
+    public void deleteTrainee(Long id) {
+        logger.info("Facade: Deleting trainee ID={}", id);
+        traineeService.deleteTrainee(id);
+    }
+
+    @Override
+    public void deleteTrainer(Long id) {
+        logger.info("Facade: Deleting trainer ID={}", id);
+        trainerService.deleteTrainer(id);
+    }
+
+    @Override
+    public void deleteTraining(Long id) {
+        logger.info("Facade: Deleting training ID={}", id);
+        trainingService.deleteTraining(id);
     }
 }
