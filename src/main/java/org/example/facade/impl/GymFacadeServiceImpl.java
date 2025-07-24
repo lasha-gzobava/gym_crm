@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -39,7 +40,7 @@ public class GymFacadeServiceImpl implements GymFacadeService {
     }
 
     @Override
-    public Training scheduleTraining(Long traineeId, Long trainerId, String name, String type, String date, String duration) {
+    public Training scheduleTraining(Long traineeId, Long trainerId, String name, String type, String date, Duration duration) {
         logger.info("Facade: Scheduling training: {}", name);
         return trainingService.createTraining(traineeId, trainerId, name, type, date, duration);
     }

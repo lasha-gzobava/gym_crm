@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,5 +17,5 @@ public class Training {
     private String trainingName;
     private String trainingType;
     private String trainingDate;
-    private String trainingDuration;
+    private Duration trainingDuration;
 }

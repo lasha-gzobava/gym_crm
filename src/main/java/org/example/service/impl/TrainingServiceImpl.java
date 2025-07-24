@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -26,7 +27,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     public Training createTraining(Long traineeId, Long trainerId, String trainingName,
-                                   String trainingType, String trainingDate, String trainingDuration) {
+                                   String trainingType, String trainingDate, Duration trainingDuration) {
         Long id = idGenerator.incrementAndGet();
         Training training = new Training(id, traineeId, trainerId, trainingName,
                 trainingType, trainingDate, trainingDuration);
