@@ -1,5 +1,6 @@
 package org.example.dao.impl;
 
+import lombok.Setter;
 import org.example.dao.TrainingDao;
 import org.example.entity.Training;
 import org.slf4j.Logger;
@@ -13,10 +14,12 @@ import java.util.*;
 public class TrainingDaoImpl implements TrainingDao {
 
     private static final Logger logger = LoggerFactory.getLogger(TrainingDaoImpl.class);
-    private Map<Long, Training> trainingStorage;
 
 
     @Autowired
+    private Map<Long, Training> trainingStorage;
+
+
     public void setTrainingStorage(Map<Long, Training> trainingStorage) {
         this.trainingStorage = trainingStorage;
     }
