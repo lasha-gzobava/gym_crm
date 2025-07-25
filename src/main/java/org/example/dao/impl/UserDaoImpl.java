@@ -1,5 +1,6 @@
 package org.example.dao.impl;
 
+import lombok.Setter;
 import org.example.dao.UserDao;
 import org.example.entity.User;
 import org.slf4j.Logger;
@@ -13,9 +14,10 @@ import java.util.*;
 public class UserDaoImpl implements UserDao {
 
     private static final Logger logger = LoggerFactory.getLogger(UserDaoImpl.class);
-    private Map<Long, User> userStorage;
 
     @Autowired
+    private Map<Long, User> userStorage;
+
     public void setUserStorage(Map<Long, User> userStorage) {
         this.userStorage = userStorage;
     }

@@ -14,9 +14,10 @@ public class TraineeDaoImpl implements TraineeDao {
 
     private static final Logger logger = LoggerFactory.getLogger(TraineeDaoImpl.class);
 
-    private Map<Long, Trainee> traineeStorage;
 
     @Autowired
+    private Map<Long, Trainee> traineeStorage;
+
     public void setTraineeStorage(Map<Long, Trainee> traineeStorage) {
         this.traineeStorage = traineeStorage;
     }

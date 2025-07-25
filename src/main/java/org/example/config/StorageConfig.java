@@ -3,6 +3,7 @@ package org.example.config;
 import org.example.entity.Trainee;
 import org.example.entity.Trainer;
 import org.example.entity.Training;
+import org.example.entity.User;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,4 +27,10 @@ public class StorageConfig {
     public Map<Long, Training> trainingStorage() {
         return new HashMap<>();
     }
+
+    @Bean
+    public Map<Long, User> userStorage() {
+        return new HashMap<>();
+    }
+
 }

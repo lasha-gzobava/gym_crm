@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.List;
 
-@RequiredArgsConstructor
+
 @Service
 public class GymFacadeServiceImpl implements GymFacadeService {
 
@@ -24,6 +24,14 @@ public class GymFacadeServiceImpl implements GymFacadeService {
     private final TraineeService traineeService;
     private final TrainerService trainerService;
     private final TrainingService trainingService;
+
+
+    //Changed to manual constructor instead of Lombok
+    public GymFacadeServiceImpl(TraineeService traineeService, TrainerService trainerService, TrainingService trainingService) {
+        this.traineeService = traineeService;
+        this.trainerService = trainerService;
+        this.trainingService = trainingService;
+    }
 
     // Create
 

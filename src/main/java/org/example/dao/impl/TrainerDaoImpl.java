@@ -13,12 +13,13 @@ import java.util.*;
 public class TrainerDaoImpl implements TrainerDao {
 
     private static final Logger logger = LoggerFactory.getLogger(TrainerDaoImpl.class);
+
+    @Autowired
     private Map<Long, Trainer> trainerStorage;
 
 
-    @Autowired
-    public void setTraineeStorage(Map<Long, Trainer> traineeStorage) {
-        this.trainerStorage = traineeStorage;
+    public void setTrainerStorage(Map<Long, Trainer> trainerStorage) {
+        this.trainerStorage = trainerStorage;
     }
 
     @Override

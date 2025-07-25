@@ -17,7 +17,7 @@ class TrainerDaoImplTest {
     void setUp() {
         trainerDao = new TrainerDaoImpl();
         Map<Long, Trainer> storage = new HashMap<>();
-        trainerDao.setTraineeStorage(storage);
+        trainerDao.setTrainerStorage(storage);
     }
 
     @Test
