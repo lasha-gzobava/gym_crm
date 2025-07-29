@@ -54,17 +54,16 @@ public class TrainingServiceImpl implements TrainingService {
                 (long) dto.getTrainingDuration()
         );
 
-
         trainingRepository.save(training);
         log.info("Training added for trainee {} with trainer {}", trainee.getUser().getUsername(), trainer.getUser().getUsername());
+
         return trainingMapper.toDto(training);
     }
 
     @Override
     public List<TrainingDto> getTrainingsForTrainee(String username) {
         log.info("Fetching trainings for trainee: {}", username);
-        return trainingRepository.findByTraineeUserUsername(username)
-                .stream()
+        return trainingRepository.findByTraineeUserUsername(username).stream()
                 .map(trainingMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -72,8 +71,7 @@ public class TrainingServiceImpl implements TrainingService {
     @Override
     public List<TrainingDto> getTrainingsForTrainer(String username) {
         log.info("Fetching trainings for trainer: {}", username);
-        return trainingRepository.findByTrainerUserUsername(username)
-                .stream()
+        return trainingRepository.findByTrainerUserUsername(username).stream()
                 .map(trainingMapper::toDto)
                 .collect(Collectors.toList());
     }
