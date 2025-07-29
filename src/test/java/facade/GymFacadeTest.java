@@ -47,7 +47,7 @@ class GymFacadeTest {
         CreateTraineeDto dto = mock(CreateTraineeDto.class);
         TraineeDto returnedDto = mock(TraineeDto.class);
 
-        // Validator returns no violations
+
         when(validator.validate(dto)).thenReturn(Set.of());
         when(traineeService.createTrainee(dto)).thenReturn(returnedDto);
 

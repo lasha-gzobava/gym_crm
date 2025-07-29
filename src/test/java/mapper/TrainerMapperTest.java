@@ -17,7 +17,7 @@ class TrainerMapperTest {
 
     @Test
     void toDto_shouldMapAllFields() {
-        // Prepare User entity
+
         User user = new User();
         user.setUserId(20L);
         user.setFirstName("Alice");
@@ -25,20 +25,19 @@ class TrainerMapperTest {
         user.setUsername("alice.smith");
         user.setIsActive(false);
 
-        // Prepare TrainingType entity
+
         TrainingType trainingType = new TrainingType();
         trainingType.setTrainingTypeName("Crossfit");
 
-        // Prepare Trainer entity
+
         Trainer trainer = new Trainer();
         trainer.setTrainerId(7L);
         trainer.setUser(user);
         trainer.setSpecialization(trainingType);
 
-        // Map to DTO
         TrainerDto dto = trainerMapper.toDto(trainer);
 
-        // Verify mapping
+
         assertNotNull(dto);
         assertEquals(7L, dto.getId());
         assertEquals("Crossfit", dto.getSpecialization());

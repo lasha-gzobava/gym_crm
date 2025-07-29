@@ -16,7 +16,7 @@ class TraineeMapperTest {
 
     @Test
     void toDto_shouldMapAllFields() {
-        // Prepare User entity
+
         User user = new User();
         user.setUserId(10L);
         user.setFirstName("John");
@@ -24,17 +24,17 @@ class TraineeMapperTest {
         user.setUsername("john.doe");
         user.setIsActive(true);
 
-        // Prepare Trainee entity
         Trainee trainee = new Trainee();
         trainee.setTraineeId(5L);
         trainee.setAddress("123 Main St");
         trainee.setDateOfBirth(LocalDate.of(1990, 1, 1));
         trainee.setUser(user);
 
-        // Map to DTO
+
+
         TraineeDto dto = traineeMapper.toDto(trainee);
 
-        // Verify mapping
+
         assertNotNull(dto);
         assertEquals(5L, dto.getId());
         assertEquals("123 Main St", dto.getAddress());
