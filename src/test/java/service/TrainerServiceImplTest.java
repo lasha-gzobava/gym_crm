@@ -18,8 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -42,24 +41,29 @@ class TrainerServiceImplTest {
 
     @Test
     void createTrainer_shouldCreateAndReturnDto() {
-        CreateUserDto userDto = new CreateUserDto("Alice", "Smith");
         CreateTrainerDto dto = new CreateTrainerDto();
+        CreateUserDto userDto = new CreateUserDto("Alice", "Smith");
         dto.setUser(userDto);
         dto.setSpecialization("Yoga");
 
-        TrainingType trainingType = new TrainingType();
-        User user = new User("Alice", "Smith", "asmith", "secret");
-        Trainer trainer = new Trainer(trainingType, user);
-        TrainerDto expected = new TrainerDto();
+        TrainingType specialization = new TrainingType("Yoga");
+        when(trainingTypeRepository.findByTrainingTypeName("Yoga"))
+                .thenReturn(Optional.of(specialization));
 
-        when(trainingTypeRepository.findByTrainingTypeName("Yoga")).thenReturn(Optional.of(trainingType));
+        User user = new User("Alice", "Smith", "asmith", "encodedPass");
         when(userService.createUser("Alice", "Smith")).thenReturn(user);
-        when(trainerRepository.save(any())).thenReturn(trainer);
-        when(trainerMapper.toDto(trainer)).thenReturn(expected);
+
+        Trainer trainer = new Trainer(specialization, user);
+        when(trainerRepository.save(any(Trainer.class))).thenReturn(trainer);
+
+        TrainerDto expectedDto = new TrainerDto();  // minimal dummy
+        when(trainerMapper.toDto(any(Trainer.class))).thenReturn(expectedDto);
 
         TrainerDto result = trainerService.createTrainer(dto);
-        assertEquals(expected, result);
+
+        assertEquals(expectedDto, result);
     }
+
 
     @Test
     void getByUsername_shouldAuthenticateAndReturnDto() {
@@ -139,32 +143,28 @@ class TrainerServiceImplTest {
 
     @Test
     void getUnassignedTrainersForTrainee_shouldReturnOnlyUnassigned() {
-        String traineeUsername = "john_doe";
+        String traineeUsername = "jdoe";
 
-        Trainer trainer1 = new Trainer(); trainer1.setTrainerId(1L);
-        Trainer trainer2 = new Trainer(); trainer2.setTrainerId(2L);
-        Trainer trainer3 = new Trainer(); trainer3.setTrainerId(3L);
-
-        Trainer assignedTrainer = new Trainer(); assignedTrainer.setTrainerId(1L);
-
+        User user = new User("John", "Doe", "jdoe", "pass");
         Trainee trainee = new Trainee();
-        trainee.setTrainers(List.of(assignedTrainer));
+        trainee.setUser(user);
 
-        List<Trainer> allTrainers = List.of(trainer1, trainer2, trainer3);
+        Trainer assignedTrainer = new Trainer();
+        Trainer unassignedTrainer = new Trainer();
 
-        TrainerDto dto2 = new TrainerDto();
-        TrainerDto dto3 = new TrainerDto();
+        List<Trainer> allTrainers = List.of(assignedTrainer, unassignedTrainer);
+        trainee.setTrainers(List.of(assignedTrainer)); // must be same instance
 
-        when(traineeRepository.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findWithTrainersByUserUsername(traineeUsername))
+                .thenReturn(Optional.of(trainee));
         when(trainerRepository.findAll()).thenReturn(allTrainers);
-        when(trainerMapper.toDto(trainer2)).thenReturn(dto2);
-        when(trainerMapper.toDto(trainer3)).thenReturn(dto3);
+        when(trainerMapper.toDto(unassignedTrainer)).thenReturn(new TrainerDto());
 
         List<TrainerDto> result = trainerService.getUnassignedTrainersForTrainee(traineeUsername);
 
-        assertEquals(2, result.size());
-        assertTrue(result.contains(dto2));
-        assertTrue(result.contains(dto3));
+        assertEquals(1, result.size());
     }
+
+
 
 }

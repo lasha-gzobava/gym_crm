@@ -113,16 +113,15 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     public List<TrainerDto> getUnassignedTrainersForTrainee(String traineeUsername) {
-        Trainee trainee = traineeRepository.findByUsername(traineeUsername)
+        Trainee trainee = traineeRepository.findWithTrainersByUserUsername(traineeUsername)
                 .orElseThrow(() -> new RuntimeException("Trainee not found"));
 
-        List<Trainer> all = trainerRepository.findAll();
-        List<Trainer> assigned = trainee.getTrainers();
+        List<Trainer> allTrainers = trainerRepository.findAll();
 
-        return all.stream()
-                .filter(trainer -> !assigned.contains(trainer))
+        return allTrainers.stream()
+                .filter(trainer -> !trainee.getTrainers().contains(trainer))
                 .map(trainerMapper::toDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
 }

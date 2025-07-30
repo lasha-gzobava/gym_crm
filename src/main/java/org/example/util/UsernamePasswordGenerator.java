@@ -13,6 +13,9 @@ public class UsernamePasswordGenerator {
     private static final String CHAR_POOL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
 
+    // Set this to true to enable hardcoded password for testing/demo
+    private static final boolean DEMO_MODE = true;
+
     public static String generateUniqueUsername(String firstName, String lastName, List<String> existingUsernames) {
         String baseUsername = firstName + "." + lastName;
         String candidate = baseUsername;
@@ -27,6 +30,10 @@ public class UsernamePasswordGenerator {
     }
 
     public static String generateRandomPassword() {
+        if (DEMO_MODE) {
+            return "password";
+        }
+
         StringBuilder sb = new StringBuilder(PASSWORD_LENGTH);
         for (int i = 0; i < PASSWORD_LENGTH; i++) {
             sb.append(CHAR_POOL.charAt(RANDOM.nextInt(CHAR_POOL.length())));

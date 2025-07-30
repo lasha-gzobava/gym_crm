@@ -14,6 +14,16 @@ public interface TraineeRepository extends JpaRepository<Trainee, Long> {
     @Query("SELECT t FROM Trainee t WHERE t.user.username = :username")
     Optional<Trainee> findByUsername(@Param("username") String username);
 
+    @Query("""
+    SELECT t FROM Trainee t
+    LEFT JOIN FETCH t.trainers
+    JOIN FETCH t.user
+    WHERE t.user.username = :username
+""")
+    Optional<Trainee> findWithTrainersByUserUsername(@Param("username") String username);
+
+
+
     @Modifying
     @Query("DELETE FROM Trainee t WHERE t.user.username = :username")
     void deleteByUsername(String username);

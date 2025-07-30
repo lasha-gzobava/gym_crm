@@ -9,6 +9,9 @@ import org.example.util.UsernamePasswordGenerator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 
 @Service
@@ -30,7 +33,12 @@ public class UserServiceImpl implements UserService {
 
         User user = new User(firstName, lastName, username, encodedPassword);
         userRepository.save(user);
-        log.info("Created user: {}", username);
+        try (PrintWriter writer = new PrintWriter(new FileWriter("generated-credentials.txt", true))) {
+            writer.println("Username: " + username + " | Password: " + rawPassword);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        log.info("Created user: {} with password: {}", username, rawPassword);
         return user;
     }
 
@@ -65,7 +73,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public User authenticate(String username, String password) {
         return userRepository.findByUsername(username)
-                .filter(u -> u.getPassword().equals(password))
+                .filter(u -> passwordEncoder.matches(password, u.getPassword()))
                 .orElseThrow(() -> new RuntimeException("Invalid username or password"));
     }
+
 }

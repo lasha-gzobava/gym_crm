@@ -15,7 +15,7 @@ public class Demo {
         GymFacade gym = context.getBean(GymFacade.class);
         TrainingTypeRepository typeRepo = context.getBean(TrainingTypeRepository.class);
 
-        // 1-2. Create profiles
+        // [1] Create Trainee Profile
         CreateUserDto traineeUser = new CreateUserDto("John", "Doe");
         CreateTraineeDto createTrainee = new CreateTraineeDto();
         createTrainee.setUser(traineeUser);
@@ -23,8 +23,9 @@ public class Demo {
         createTrainee.setDateOfBirth(LocalDate.of(1998, 1, 10));
         TraineeDto trainee = gym.createTrainee(createTrainee);
         String traineeUsername = trainee.getUser().getUsername();
-        String traineePassword = "password"; // default
+        String traineePassword = "password"; // default generated
 
+        // [2] Create Trainer Profile
         CreateUserDto trainerUser = new CreateUserDto("Alice", "Smith");
         TrainingType yoga = typeRepo.findByTrainingTypeName("Yoga")
                 .orElseGet(() -> typeRepo.save(new TrainingType("Yoga")));
@@ -35,42 +36,72 @@ public class Demo {
         String trainerUsername = trainer.getUser().getUsername();
         String trainerPassword = "password";
 
-        // 3-4. Username/password check (via get calls)
+        // [3] Authenticate Trainee
         gym.getTrainee(traineeUsername, traineePassword);
+
+        // [4] Authenticate Trainer
         gym.getTrainer(trainerUsername, trainerPassword);
 
-        // 5-6. Select profiles
-        System.out.println("Trainee profile: " + gym.getTrainee(traineeUsername, traineePassword));
+        // [5] Select Trainer Profile
         System.out.println("Trainer profile: " + gym.getTrainer(trainerUsername, trainerPassword));
 
-        // 7-8. Change password
+        // [6] Select Trainee Profile
+        System.out.println("Trainee profile: " + gym.getTrainee(traineeUsername, traineePassword));
+
+        // [7] Change Trainee Password
         PasswordChangeDto changeTraineePass = new PasswordChangeDto(traineeUsername, "password", "newpass123");
         gym.changeTraineePassword(changeTraineePass);
         traineePassword = "newpass123";
 
+        // [8] Change Trainer Password
         PasswordChangeDto changeTrainerPass = new PasswordChangeDto(trainerUsername, "password", "trainerpass");
         gym.changeTrainerPassword(changeTrainerPass);
         trainerPassword = "trainerpass";
 
-        // 9-10. Update profiles
-        createTrainee.setAddress("Updated Ave 456");
-        gym.updateTrainee(traineeUsername, traineePassword, createTrainee);
-
+        // [9] Update Trainer Profile
         createTrainer.setSpecialization("Yoga");
         gym.updateTrainer(trainerUsername, trainerPassword, createTrainer);
 
-        // 11-12. Toggle status
+        // [10] Update Trainee Profile
+        createTrainee.setAddress("Updated Ave 456");
+        gym.updateTrainee(traineeUsername, traineePassword, createTrainee);
+
+        // [11] Deactivate/Activate Trainee
         gym.toggleTraineeStatus(traineeUsername, traineePassword);
+
+        // [12] Deactivate/Activate Trainer
         gym.toggleTrainerStatus(trainerUsername, trainerPassword);
 
-        // 13. Delete trainee (but first create again for remaining steps)
+        // [13] Delete Trainee Profile
         gym.deleteTrainee(traineeUsername, traineePassword);
 
+        // Recreate Trainee for remaining steps
         trainee = gym.createTrainee(createTrainee);
         traineeUsername = trainee.getUser().getUsername();
         traineePassword = "password";
 
-        // 16. Add training
+        // [14] Get Trainee Trainings with Filters
+        List<TrainingDto> filteredTraineeTrainings = gym.getTraineeTrainingsFiltered(
+                traineeUsername,
+                traineePassword,
+                LocalDate.now().minusDays(7),
+                LocalDate.now().plusDays(1),
+                trainer.getUser().getFullName(),
+                "Yoga"
+        );
+        System.out.println("[14] Filtered Trainee Trainings: " + filteredTraineeTrainings);
+
+        // [15] Get Trainer Trainings with Filters
+        List<TrainingDto> filteredTrainerTrainings = gym.getTrainerTrainingsFiltered(
+                trainerUsername,
+                trainerPassword,
+                LocalDate.now().minusDays(7),
+                LocalDate.now().plusDays(1),
+                trainee.getUser().getFullName()
+        );
+        System.out.println("[15] Filtered Trainer Trainings: " + filteredTrainerTrainings);
+
+        // [16] Add Training
         CreateTrainingDto training = new CreateTrainingDto();
         training.setTrainingName("Morning Yoga");
         training.setTrainingDate(LocalDate.now());
@@ -78,22 +109,22 @@ public class Demo {
         training.setTrainerId(trainer.getId());
         training.setTraineeId(trainee.getId());
         training.setTrainingTypeId(yoga.getTrainingTypeId());
+        training.setTrainerUsername(trainerUsername);
+        training.setTrainerPassword(trainerPassword);
+
         gym.addTraining(training, trainerUsername, trainerPassword);
 
-        // 14-15. Get trainings with criteria (for now just general list)
-        List<TrainingDto> tTrainings = gym.getTraineeTrainings(traineeUsername, traineePassword);
-        System.out.println("Trainee trainings: " + tTrainings);
-
+        // Optional check: see training
         List<TrainingDto> trTrainings = gym.getTrainerTrainings(trainerUsername, trainerPassword);
         System.out.println("Trainer trainings: " + trTrainings);
 
-        // 17. Get trainers not assigned to trainee
-        System.out.println("Unassigned trainers: " + gym.getUnassignedTrainers(traineeUsername, traineePassword));
+        // [17] Get Unassigned Trainers for Trainee
+        List<TrainerDto> unassigned = gym.getUnassignedTrainers(traineeUsername, traineePassword);
+        System.out.println("[17] Unassigned Trainers: " + unassigned);
 
-        // 18. Update assigned trainers
+        // [18] Update Trainee's Trainers List
         gym.updateTraineeTrainers(traineeUsername, traineePassword, List.of(trainer.getId()));
-
-        System.out.println("Updated trainee-trainers mapping complete.");
+        System.out.println("[18] Updated trainee-trainers mapping complete.");
 
         context.close();
     }

@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 @NoArgsConstructor
 @Data
 @Entity
@@ -28,5 +30,19 @@ public class Trainer {
         Specialization = specialization;
         this.user = user;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Trainer)) return false;
+        Trainer that = (Trainer) o;
+        return getTrainerId() != null && getTrainerId().equals(that.getTrainerId());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getTrainerId());
+    }
+
 
 }

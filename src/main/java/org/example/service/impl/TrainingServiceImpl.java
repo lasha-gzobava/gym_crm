@@ -40,7 +40,7 @@ public class TrainingServiceImpl implements TrainingService {
         log.info("Adding training: {}", dto.getTrainingName());
 
 
-        userService.authenticate(dto.getTrainerUsername(), dto.getTrainerPassword());
+//        userService.authenticate(dto.getTrainerUsername(), dto.getTrainerPassword());
 
         Trainer trainer = trainerRepository.findById(dto.getTrainerId())
                 .orElseThrow(() -> new RuntimeException("Trainer not found"));

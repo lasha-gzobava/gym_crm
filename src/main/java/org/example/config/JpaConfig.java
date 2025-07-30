@@ -20,14 +20,6 @@ import java.util.Properties;
 @EnableJpaRepositories(basePackages = "org.example.repository")
 public class JpaConfig {
 
-//    @Value("${spring.datasource.url}")
-//    private String url;
-//
-//    @Value("${spring.datasource.username}")
-//    private String username;
-//
-//    @Value("${spring.datasource.password}")
-//    private String password;
 
     @Bean
     public DataSource dataSource() {
@@ -48,7 +40,7 @@ public class JpaConfig {
 
         Properties props = new Properties();
         props.setProperty("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        props.setProperty("hibernate.hbm2ddl.auto", "create");
+        props.setProperty("hibernate.hbm2ddl.auto", "update");
         props.setProperty("hibernate.show_sql", "true");
 
         emf.setJpaProperties(props);

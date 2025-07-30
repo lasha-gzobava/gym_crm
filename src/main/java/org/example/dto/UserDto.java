@@ -11,4 +11,8 @@ public class UserDto {
     private String lastName;
     private String username;
     private Boolean isActive;
+
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 }

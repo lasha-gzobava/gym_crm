@@ -89,10 +89,14 @@ public class GymFacade {
     // --- Training ---
 
     public TrainingDto addTraining(CreateTrainingDto dto, String trainerUsername, String trainerPassword) {
-        validate(dto);
+        // Authenticate once — outside the DTO
         userService.authenticate(trainerUsername, trainerPassword);
+
+        // Proceed with validation and service call
+        validate(dto);
         return trainingService.addTraining(dto);
     }
+
 
     public List<TrainingDto> getTraineeTrainings(String username, String password) {
         userService.authenticate(username, password);

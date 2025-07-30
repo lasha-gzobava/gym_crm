@@ -104,13 +104,16 @@ class UserServiceImplTest {
 
     @Test
     void authenticate_shouldReturnUserIfPasswordMatches() {
-        User user = new User("John", "Doe", "jdoe", "pass");
+        User user = new User("John", "Doe", "jdoe", "encodedPassword");
+
         when(userRepository.findByUsername("jdoe")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("pass", "encodedPassword")).thenReturn(true); // Mock this!
 
         User result = userService.authenticate("jdoe", "pass");
 
         assertEquals(user, result);
     }
+
 
     @Test
     void authenticate_shouldThrowIfUserNotFound() {
