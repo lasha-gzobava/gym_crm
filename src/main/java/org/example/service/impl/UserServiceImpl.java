@@ -61,4 +61,11 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
+
+    @Override
+    public User authenticate(String username, String password) {
+        return userRepository.findByUsername(username)
+                .filter(u -> u.getPassword().equals(password))
+                .orElseThrow(() -> new RuntimeException("Invalid username or password"));
+    }
 }

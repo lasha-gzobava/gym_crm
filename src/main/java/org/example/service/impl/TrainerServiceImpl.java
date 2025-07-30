@@ -5,16 +5,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.dto.CreateTrainerDto;
 import org.example.dto.PasswordChangeDto;
 import org.example.dto.TrainerDto;
+import org.example.entity.Trainee;
 import org.example.entity.Trainer;
 import org.example.entity.TrainingType;
 import org.example.entity.User;
 import org.example.mapper.TrainerMapper;
+import org.example.repository.TraineeRepository;
 import org.example.repository.TrainerRepository;
 import org.example.repository.TrainingTypeRepository;
 import org.example.service.TrainerService;
 import org.example.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +28,7 @@ public class TrainerServiceImpl implements TrainerService {
 
     private final TrainerRepository trainerRepository;
     private final TrainingTypeRepository trainingTypeRepository;
+    private final TraineeRepository traineeRepository;
     private final TrainerMapper trainerMapper;
     private final UserService userService;
 
@@ -47,14 +53,16 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
-    public TrainerDto getByUsername(String username) {
-        log.debug("Fetching trainer by username: {}", username);
+    public TrainerDto getByUsername(String username, String password) {
+        log.debug("Authenticating and fetching trainer: {}", username);
+        userService.authenticate(username, password);
+
         Trainer trainer = trainerRepository.findByUsername(username)
                 .orElseThrow(() -> {
                     log.warn("Trainer not found: {}", username);
                     return new RuntimeException("Trainer not found");
                 });
-        log.debug("Returning trainer DTO for username: {}", username);
+
         return trainerMapper.toDto(trainer);
     }
 
@@ -66,8 +74,10 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Transactional
-    public void updateTrainer(String username, CreateTrainerDto dto) {
-        log.info("Updating trainer profile: {}", username);
+    public void updateTrainer(String username, CreateTrainerDto dto, String password) {
+        log.info("Updating trainer: {}", username);
+        userService.authenticate(username, password);
+
         Trainer trainer = trainerRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Trainer not found"));
 
@@ -78,25 +88,41 @@ public class TrainerServiceImpl implements TrainerService {
                 .orElseThrow(() -> new RuntimeException("Specialization not found"));
 
         trainer.setSpecialization(specialization);
-
         trainerRepository.save(trainer);
         log.info("Trainer updated: {}", username);
     }
 
     @Override
     @Transactional
-    public void toggleActive(String username) {
+    public void toggleActive(String username, String password) {
+        userService.authenticate(username, password);
         userService.toggleActive(username);
     }
 
     @Override
     @Transactional
-    public void deleteByUsername(String username) {
+    public void deleteByUsername(String username, String password) {
         log.warn("Deleting trainer by username: {}", username);
+        userService.authenticate(username, password);
+
         Trainer trainer = trainerRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Trainer not found"));
 
         trainerRepository.delete(trainer);
         log.warn("Trainer deleted: {}", username);
     }
+
+    public List<TrainerDto> getUnassignedTrainersForTrainee(String traineeUsername) {
+        Trainee trainee = traineeRepository.findByUsername(traineeUsername)
+                .orElseThrow(() -> new RuntimeException("Trainee not found"));
+
+        List<Trainer> all = trainerRepository.findAll();
+        List<Trainer> assigned = trainee.getTrainers();
+
+        return all.stream()
+                .filter(trainer -> !assigned.contains(trainer))
+                .map(trainerMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
 }

@@ -7,4 +7,5 @@ public interface UserService {
     void changePassword(String username, String oldPassword, String newPassword);
     void toggleActive(String username);
     User getByUsername(String username);
+    User authenticate(String username, String password);
 }

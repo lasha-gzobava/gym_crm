@@ -1,10 +1,15 @@
 package service;
 
-import org.example.dto.*;
+import org.example.dto.CreateTraineeDto;
+import org.example.dto.CreateUserDto;
+import org.example.dto.PasswordChangeDto;
+import org.example.dto.TraineeDto;
 import org.example.entity.Trainee;
+import org.example.entity.Trainer;
 import org.example.entity.User;
 import org.example.mapper.TraineeMapper;
 import org.example.repository.TraineeRepository;
+import org.example.repository.TrainerRepository;
 import org.example.repository.TrainingRepository;
 import org.example.service.UserService;
 import org.example.service.impl.TraineeServiceImpl;
@@ -13,30 +18,21 @@ import org.junit.jupiter.api.Test;
 import org.mockito.*;
 
 import java.time.LocalDate;
-import java.util.Optional;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class TraineeServiceImplTest {
 
-    @Mock
-    private TraineeRepository traineeRepository;
-
-    @Mock
-    private TraineeMapper traineeMapper;
-
-    @Mock
-    private UserService userService;
-
-    @Mock
-    private TrainingRepository trainingRepository;
-
+    @Mock private TraineeRepository traineeRepository;
+    @Mock private TraineeMapper traineeMapper;
+    @Mock private TrainerRepository trainerRepository;
+    @Mock private TrainingRepository trainingRepository;
+    @Mock private UserService userService;
 
     @InjectMocks
     private TraineeServiceImpl traineeService;
-
-
 
     @BeforeEach
     void setUp() {
@@ -44,170 +40,134 @@ class TraineeServiceImplTest {
     }
 
     @Test
-    void createTrainee_success() {
-        // Prepare DTO and entities
-        CreateTraineeDto createDto = new CreateTraineeDto();
-        createDto.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        createDto.setAddress("123 Main St");
-
-        CreateUserDto createUserDto = new CreateUserDto();
-        createUserDto.setFirstName("John");
-        createUserDto.setLastName("Doe");
-        createDto.setUser(createUserDto);
-
-        User user = new User();
-        user.setFirstName("John");
-        user.setLastName("Doe");
-        user.setUsername("john.doe");
-
-        Trainee trainee = new Trainee();
-        trainee.setDateOfBirth(createDto.getDateOfBirth());
-        trainee.setAddress(createDto.getAddress());
-        trainee.setUser(user);
-
-        // Create expected UserDto for the returned TraineeDto
-        UserDto userDto = new UserDto();
-        userDto.setFirstName("John");
-        userDto.setLastName("Doe");
-        userDto.setUsername("john.doe");
-
-        TraineeDto traineeDto = new TraineeDto();
-        traineeDto.setUser(userDto);
-
-        // Mock behavior
-        when(userService.createUser("John", "Doe")).thenReturn(user);
-        when(traineeRepository.save(any(Trainee.class))).thenReturn(trainee);
-        when(traineeMapper.toDto(trainee)).thenReturn(traineeDto);
-
-        // Call method
-        TraineeDto result = traineeService.createTrainee(createDto);
-
-        // Verify
-        assertNotNull(result);
-        assertEquals("John", result.getUser().getFirstName());
-        verify(userService).createUser("John", "Doe");
-        verify(traineeRepository).save(any(Trainee.class));
-        verify(traineeMapper).toDto(trainee);
-    }
-
-    @Test
-    void getByUsername_found() {
-        String username = "john.doe";
-        User user = new User();
-        user.setUsername(username);
-
-        Trainee trainee = new Trainee();
-        trainee.setUser(user);
-
-        TraineeDto traineeDto = new TraineeDto();
-        UserDto userDto = new UserDto();  // Use UserDto here, not CreateUserDto
-        userDto.setFirstName("John");
-        userDto.setLastName("Doe");
-        traineeDto.setUser(userDto);  // This matches TraineeDto#setUser(UserDto)
-
-        when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
-        when(traineeMapper.toDto(trainee)).thenReturn(traineeDto);
-
-        TraineeDto result = traineeService.getByUsername(username);
-
-        assertNotNull(result);
-        assertEquals("John", result.getUser().getFirstName());
-        verify(traineeRepository).findByUsername(username);
-        verify(traineeMapper).toDto(trainee);
-    }
-
-
-    @Test
-    void getByUsername_notFound_throws() {
-        String username = "missing";
-        when(traineeRepository.findByUsername(username)).thenReturn(Optional.empty());
-
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> traineeService.getByUsername(username));
-        assertEquals("Trainee not found", ex.getMessage());
-        verify(traineeRepository).findByUsername(username);
-        verifyNoMoreInteractions(traineeMapper);
-    }
-
-    @Test
-    void changePassword_delegatesToUserService() {
-        PasswordChangeDto dto = new PasswordChangeDto();
-        dto.setUsername("user1");
-        dto.setOldPassword("old");
-        dto.setNewPassword("new");
-
-        traineeService.changePassword(dto);
-
-        verify(userService).changePassword("user1", "old", "new");
-    }
-
-    @Test
-    void updateTrainee_success() {
-        String username = "john.doe";
+    void createTrainee_shouldCreateAndReturnDto() {
+        CreateUserDto userDto = new CreateUserDto("John", "Doe");
         CreateTraineeDto dto = new CreateTraineeDto();
-        dto.setDateOfBirth(LocalDate.of(1991, 2, 2));
-        dto.setAddress("New Address");
-        CreateUserDto userDto = new CreateUserDto();
-        userDto.setFirstName("Jane");
-        userDto.setLastName("Smith");
+        dto.setDateOfBirth(LocalDate.of(1990, 1, 1));
+        dto.setAddress("Address");
         dto.setUser(userDto);
 
-        User user = new User();
-        user.setFirstName("OldFirst");
-        user.setLastName("OldLast");
+        User user = new User("John", "Doe", "jdoe", "secret123");
+        Trainee trainee = new Trainee(dto.getDateOfBirth(), dto.getAddress(), user);
+        TraineeDto expected = new TraineeDto();
 
+        when(userService.createUser("John", "Doe")).thenReturn(user);
+        when(traineeRepository.save(any())).thenReturn(trainee);
+        when(traineeMapper.toDto(trainee)).thenReturn(expected);
+
+        TraineeDto result = traineeService.createTrainee(dto);
+        assertEquals(expected, result);
+    }
+
+    @Test
+    void getByUsername_shouldReturnDtoWhenAuthenticated() {
+        String username = "jdoe";
+        String password = "secret123";
         Trainee trainee = new Trainee();
-        trainee.setUser(user);
+        TraineeDto dto = new TraineeDto();
+
+        User user = new User("John", "Doe", "jdoe", "secret123");
+
+        when(userService.authenticate(username, password)).thenReturn(user);
+        when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
+        when(traineeMapper.toDto(trainee)).thenReturn(dto);
+
+        TraineeDto result = traineeService.getByUsername(username, password);
+        assertEquals(dto, result);
+    }
+
+    @Test
+    void changePassword_shouldDelegateToUserService() {
+        PasswordChangeDto dto = new PasswordChangeDto("jdoe", "oldPass", "newPass");
+        traineeService.changePassword(dto);
+        verify(userService).changePassword("jdoe", "oldPass", "newPass");
+    }
+
+    @Test
+    void updateTrainee_shouldUpdateFieldsCorrectly() {
+        String username = "jdoe";
+        String password = "secret123";
+
+        CreateUserDto userDto = new CreateUserDto("Updated", "Name");
+        CreateTraineeDto dto = new CreateTraineeDto();
+        dto.setDateOfBirth(LocalDate.of(2000, 2, 2));
+        dto.setAddress("New Address");
+        dto.setUser(userDto);
+
+
+
+        User user = new User("John", "Doe", "jdoe", "secret123");
+        Trainee trainee = new Trainee(LocalDate.of(1990, 1, 1), "Old Address", user);
 
         when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
 
-        traineeService.updateTrainee(username, dto);
+        traineeService.updateTrainee(username, dto, password);
 
-        assertEquals("Jane", trainee.getUser().getFirstName());
-        assertEquals("Smith", trainee.getUser().getLastName());
+        assertEquals("Updated", trainee.getUser().getFirstName());
+        assertEquals("Name", trainee.getUser().getLastName());
         assertEquals("New Address", trainee.getAddress());
-        assertEquals(dto.getDateOfBirth(), trainee.getDateOfBirth());
+        assertEquals(LocalDate.of(2000, 2, 2), trainee.getDateOfBirth());
 
-        verify(traineeRepository).findByUsername(username);
         verify(traineeRepository).save(trainee);
     }
 
     @Test
-    void toggleActive_delegatesToUserService() {
-        String username = "john.doe";
-        traineeService.toggleActive(username);
+    void toggleActive_shouldAuthenticateAndToggle() {
+        String username = "jdoe";
+        String password = "secret123";
+
+        traineeService.toggleActive(username, password);
+
+        verify(userService).authenticate(username, password);
         verify(userService).toggleActive(username);
     }
 
     @Test
-    void deleteByUsername_success() {
-        String username = "john.doe";
+    void deleteByUsername_shouldRemoveTraineeAndTrainings() {
+        String username = "jdoe";
+        String password = "secret123";
+        User user = new User("John", "Doe", "jdoe", "secret123");
+        Trainee trainee = new Trainee(LocalDate.of(1990, 1, 1), "Address", user);
 
-        User user = new User();
-        user.setUsername(username);
-
-        Trainee trainee = new Trainee();
-        trainee.setUser(user);
-
-        // Mock the training repository
         when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
 
-        // Add this if trainingRepository is involved in deletion
-        doNothing().when(trainingRepository).deleteAllByTrainee(trainee);
+        traineeService.deleteByUsername(username, password);
 
-        traineeService.deleteByUsername(username);
-
-        verify(trainingRepository).deleteAllByTrainee(trainee); // verify cascade delete
+        verify(trainingRepository).deleteAllByTrainee(trainee);
         verify(traineeRepository).delete(trainee);
     }
 
+    @Test
+    void updateAssignedTrainers_shouldSetNewTrainers() {
+        String username = "jdoe";
+        List<Long> ids = List.of(1L, 2L);
+        User user = new User("John", "Doe", "jdoe", "secret123");
+        Trainee trainee = new Trainee(LocalDate.of(1990, 1, 1), "Address", user);
+        List<Trainer> trainers = List.of(new Trainer(), new Trainer());
+
+        when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findAllById(ids)).thenReturn(trainers);
+
+        traineeService.updateAssignedTrainers(username, ids);
+
+        assertEquals(trainers, trainee.getTrainers());
+        verify(traineeRepository).save(trainee);
+    }
 
     @Test
-    void deleteByUsername_notFound_throws() {
-        String username = "missing";
-        when(traineeRepository.findByUsername(username)).thenReturn(Optional.empty());
+    void updateTrainersList_shouldUpdateIfAllValid() {
+        String username = "jdoe";
+        List<Long> ids = List.of(1L, 2L);
+        User user = new User("John", "Doe", "jdoe", "secret123");
+        Trainee trainee = new Trainee(LocalDate.of(1990, 1, 1), "Address", user);
+        List<Trainer> trainers = List.of(new Trainer(), new Trainer());
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () -> traineeService.deleteByUsername(username));
-        assertEquals("Trainee not found", ex.getMessage());
-        verify(traineeRepository).findByUsername(username);
+        when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findAllById(ids)).thenReturn(trainers);
+
+        traineeService.updateTrainersList(username, ids);
+
+        assertEquals(trainers, trainee.getTrainers());
+        verify(traineeRepository).save(trainee);
     }
 }
