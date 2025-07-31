@@ -1,8 +1,9 @@
-package org.example.dto;
+package org.example.dto.trainer;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import org.example.dto.user.CreateUserDto;
 
 @Data
 public class CreateTrainerDto {

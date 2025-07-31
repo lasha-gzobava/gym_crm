@@ -3,31 +3,31 @@ package org.example.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.Objects;
-
 @NoArgsConstructor
 @Data
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "users")
 public class User {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long userId;
 
-    @Column(nullable = false, length = 55)
+    @Column(name = "firstname", nullable = false, length = 55)
     private String firstName;
 
-    @Column(nullable = false, length = 55)
+    @Column(name = "lastname", nullable = false, length = 55)
     private String lastName;
 
-    @Column(unique = true, length = 55)
+    @Column(name = "username", unique = true, length = 55)
     private String username;
 
-    @Column(nullable = false)
+    @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(nullable = false)
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 
     public String getFullName() {
@@ -41,6 +41,4 @@ public class User {
         this.password = password;
         this.isActive = true;
     }
-
-
 }

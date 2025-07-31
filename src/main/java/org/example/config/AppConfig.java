@@ -19,10 +19,4 @@ public class AppConfig {
         return factory.getValidator();
     }
 
-    @PostConstruct
-    public void reduceHibernateLogging() {
-        LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-        context.getLogger("org.hibernate.SQL").setLevel(Level.ERROR);
-        context.getLogger("org.hibernate.type.descriptor.sql").setLevel(Level.ERROR);
-    }
 }

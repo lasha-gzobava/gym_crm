@@ -1,7 +1,7 @@
 package service;
 
-import org.example.dto.CreateTrainingDto;
-import org.example.dto.TrainingDto;
+import org.example.dto.training.CreateTrainingDto;
+import org.example.dto.training.TrainingDto;
 import org.example.entity.*;
 import org.example.mapper.TrainingMapper;
 import org.example.repository.*;

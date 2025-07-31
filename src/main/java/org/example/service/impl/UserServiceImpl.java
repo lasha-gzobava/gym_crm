@@ -18,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class UserServiceImpl implements UserService {
-
+    private String lastRawPassword;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -31,19 +31,31 @@ public class UserServiceImpl implements UserService {
         String rawPassword = UsernamePasswordGenerator.generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(rawPassword);
 
+        this.lastRawPassword = rawPassword;
+
         User user = new User(firstName, lastName, username, encodedPassword);
         userRepository.save(user);
+
         try (PrintWriter writer = new PrintWriter(new FileWriter("generated-credentials.txt", true))) {
             writer.println("Username: " + username + " | Password: " + rawPassword);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
         log.info("Created user: {} with password: {}", username, rawPassword);
         return user;
     }
 
     @Override
+    public String getRawPassword() {
+        return lastRawPassword;
+    }
+
+
+    @Override
     public void changePassword(String username, String oldPassword, String newPassword) {
+        log.info("Received request to change password for: {}", username);
+
         User user = getByUsername(username);
 
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {

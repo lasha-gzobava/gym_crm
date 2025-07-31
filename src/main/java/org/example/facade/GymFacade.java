@@ -5,7 +5,13 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.dto.*;
+import org.example.dto.login.PasswordChangeDto;
+import org.example.dto.trainee.CreateTraineeDto;
+import org.example.dto.trainee.TraineeDto;
+import org.example.dto.trainer.CreateTrainerDto;
+import org.example.dto.trainer.TrainerDto;
+import org.example.dto.training.CreateTrainingDto;
+import org.example.dto.training.TrainingDto;
 import org.example.service.*;
 import org.springframework.stereotype.Component;
 

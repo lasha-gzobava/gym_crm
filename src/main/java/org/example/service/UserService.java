@@ -8,4 +8,5 @@ public interface UserService {
     void toggleActive(String username);
     User getByUsername(String username);
     User authenticate(String username, String password);
+    String getRawPassword(); // will be used to fetch the latest generated password
 }

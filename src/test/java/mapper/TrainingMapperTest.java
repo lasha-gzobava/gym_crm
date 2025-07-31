@@ -1,7 +1,7 @@
 package mapper;
 
 
-import org.example.dto.TrainingDto;
+import org.example.dto.training.TrainingDto;
 import org.example.entity.Trainee;
 import org.example.entity.Trainer;
 import org.example.entity.Training;

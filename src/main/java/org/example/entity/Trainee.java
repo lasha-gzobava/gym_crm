@@ -1,6 +1,5 @@
 package org.example.entity;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,27 +11,29 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @Data
+@Table(name = "trainee") // Ensures matching DB table name
 public class Trainee {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "traineeid") // Match DB naming convention
     private Long traineeId;
 
-    @Column
+    @Column(name = "dateofbirth")
     private LocalDate dateOfBirth;
 
-    @Column
+    @Column(name = "address")
     private String address;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JoinColumn(name = "userid", nullable = false, unique = true) // Match DB
     private User user;
 
     @ManyToMany
     @JoinTable(
             name = "trainee_trainer",
-            joinColumns = @JoinColumn(name = "trainee_id"),
-            inverseJoinColumns = @JoinColumn(name = "trainer_id")
+            joinColumns = @JoinColumn(name = "traineeid"),
+            inverseJoinColumns = @JoinColumn(name = "trainerid")
     )
     private List<Trainer> trainers = new ArrayList<>();
 
@@ -42,4 +43,3 @@ public class Trainee {
         this.user = user;
     }
 }
-

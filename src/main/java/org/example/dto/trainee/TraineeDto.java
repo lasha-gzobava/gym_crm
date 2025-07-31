@@ -1,7 +1,9 @@
-package org.example.dto;
+package org.example.dto.trainee;
 
 
 import lombok.Data;
+import org.example.dto.user.UserDto;
+
 import java.time.LocalDate;
 
 @Data

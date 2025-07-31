@@ -1,7 +1,8 @@
-package org.example.dto;
+package org.example.dto.trainer;
 
 
 import lombok.Data;
+import org.example.dto.user.UserDto;
 
 @Data
 public class TrainerDto {

@@ -1,6 +1,5 @@
 package org.example.entity;
 
-
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,24 +9,24 @@ import java.util.Objects;
 @NoArgsConstructor
 @Data
 @Entity
+@Table(name = "trainer") // Explicit table name (if your DB uses lowercase or snake_case)
 public class Trainer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "trainerid") // Match DB column name exactly
     private Long trainerId;
 
-
     @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "training_type_id", nullable = false)
-    private TrainingType Specialization;
-
+    @JoinColumn(name = "trainingtypeid", nullable = false) // Match DB column name
+    private TrainingType specialization;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JoinColumn(name = "userid", nullable = false, unique = true) // Match DB column name
     private User user;
 
     public Trainer(TrainingType specialization, User user) {
-        Specialization = specialization;
+        this.specialization = specialization;
         this.user = user;
     }
 
@@ -43,6 +42,4 @@ public class Trainer {
     public int hashCode() {
         return Objects.hash(getTrainerId());
     }
-
-
 }

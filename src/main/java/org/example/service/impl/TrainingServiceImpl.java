@@ -2,8 +2,8 @@ package org.example.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.dto.CreateTrainingDto;
-import org.example.dto.TrainingDto;
+import org.example.dto.training.CreateTrainingDto;
+import org.example.dto.training.TrainingDto;
 import org.example.entity.Trainee;
 import org.example.entity.Trainer;
 import org.example.entity.Training;

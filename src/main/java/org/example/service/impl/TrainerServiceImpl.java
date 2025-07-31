@@ -2,9 +2,11 @@ package org.example.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.dto.CreateTrainerDto;
-import org.example.dto.PasswordChangeDto;
-import org.example.dto.TrainerDto;
+import org.example.dto.trainee.CreateTraineeDto;
+import org.example.dto.trainee.TraineeCredentialsDto;
+import org.example.dto.trainer.CreateTrainerDto;
+import org.example.dto.login.PasswordChangeDto;
+import org.example.dto.trainer.TrainerDto;
 import org.example.entity.Trainee;
 import org.example.entity.Trainer;
 import org.example.entity.TrainingType;
@@ -19,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +51,24 @@ public class TrainerServiceImpl implements TrainerService {
 
         log.info("Trainer created with username: {}", user.getUsername());
         return trainerMapper.toDto(trainer);
+    }
+
+    @Override
+    public TraineeCredentialsDto registerWithCredentials(CreateTrainerDto dto) {
+        User user = userService.createUser(
+                dto.getUser().getFirstName(),
+                dto.getUser().getLastName()
+        );
+
+        TrainingType specialization = trainingTypeRepository.findByTrainingTypeName(dto.getSpecialization())
+                .orElseThrow(() -> new RuntimeException("Specialization not found"));
+
+        Trainer trainer = new Trainer(
+                specialization,
+                user
+        );
+
+        return new TraineeCredentialsDto(user.getUsername(), userService.getRawPassword());
     }
 
     @Override

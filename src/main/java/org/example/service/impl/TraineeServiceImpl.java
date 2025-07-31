@@ -3,9 +3,8 @@ package org.example.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.example.dto.CreateTraineeDto;
-import org.example.dto.PasswordChangeDto;
-import org.example.dto.TraineeDto;
+import org.example.dto.trainee.*;
+import org.example.dto.login.PasswordChangeDto;
 import org.example.entity.Trainee;
 import org.example.entity.Trainer;
 import org.example.entity.User;
@@ -13,8 +12,11 @@ import org.example.mapper.TraineeMapper;
 import org.example.repository.TraineeRepository;
 import org.example.repository.TrainerRepository;
 import org.example.repository.TrainingRepository;
+import org.example.repository.UserRepository;
 import org.example.service.TraineeService;
 import org.example.service.UserService;
+import org.example.util.UsernamePasswordGenerator;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,8 @@ public class TraineeServiceImpl implements TraineeService {
     private final TrainerRepository trainerRepository;
     private final UserService userService;
     private final TrainingRepository trainingRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
 
     @Override
     @Transactional
@@ -49,6 +53,22 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
+    @Transactional
+    public TraineeCredentialsDto registerWithCredentials(CreateTraineeDto dto) {
+        User user = userService.createUser(
+                dto.getUser().getFirstName(),
+                dto.getUser().getLastName()
+        );
+
+        Trainee trainee = new Trainee(dto.getDateOfBirth(), dto.getAddress(), user);
+        traineeRepository.save(trainee);
+
+        return new TraineeCredentialsDto(user.getUsername(), userService.getRawPassword());
+    }
+
+
+
+    @Override
     public TraineeDto getByUsername(String username, String password) {
         log.debug("Authenticating and fetching trainee by username: {}", username);
         userService.authenticate(username, password);
@@ -60,6 +80,62 @@ public class TraineeServiceImpl implements TraineeService {
                 });
 
         return traineeMapper.toDto(trainee);
+    }
+
+    @Override
+    public TraineeProfileDto getTraineeProfile(String username) {
+        Trainee trainee = traineeRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Trainee not found"));
+
+        List<TrainerInfoDto> trainerDtos = trainee.getTrainers().stream()
+                .map(x -> new TrainerInfoDto(
+                        x.getUser().getUsername(),
+                        x.getUser().getFirstName(),
+                        x.getUser().getLastName(),
+                        x.getSpecialization().getTrainingTypeName()
+                )).toList();
+
+        User user = trainee.getUser();
+
+        return new TraineeProfileDto(
+                user.getFirstName(),
+                user.getLastName(),
+                trainee.getDateOfBirth(),
+                trainee.getAddress(),
+                user.getIsActive(),
+                trainerDtos
+        );
+    }
+
+    @Override
+    public TraineeProfileDto updateProfile(TraineeProfileUpdateDto dto) {
+        Trainee trainee = traineeRepository.findByUsername(dto.getUsername())
+                .orElseThrow(() -> new RuntimeException("Trainee not found"));
+
+        User user = trainee.getUser();
+        user.setUsername(dto.getUsername());
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
+        if (dto.getDateOfBirth() != null) trainee.setDateOfBirth(dto.getDateOfBirth());
+        if (dto.getAddress() != null) trainee.setAddress(dto.getAddress());
+        user.setIsActive(dto.getIsActive());
+
+        List<TrainerInfoDto> trainerDtos = trainee.getTrainers().stream()
+                .map(x -> new TrainerInfoDto(
+                        x.getUser().getUsername(),
+                        x.getUser().getFirstName(),
+                        x.getUser().getLastName(),
+                        x.getSpecialization().getTrainingTypeName()
+                )).toList();
+
+        return new TraineeProfileDto(
+                user.getFirstName(),
+                user.getLastName(),
+                trainee.getDateOfBirth(),
+                trainee.getAddress(),
+                user.getIsActive(),
+                trainerDtos
+        );
     }
 
     @Override

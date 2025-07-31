@@ -1,8 +1,9 @@
-package org.example.dto;
+package org.example.dto.trainee;
 
 
 import jakarta.validation.Valid;
 import lombok.Data;
+import org.example.dto.user.CreateUserDto;
 
 
 import java.time.LocalDate;

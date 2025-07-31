@@ -1,7 +1,7 @@
 package org.example.service;
 
-import org.example.dto.CreateTrainingDto;
-import org.example.dto.TrainingDto;
+import org.example.dto.training.CreateTrainingDto;
+import org.example.dto.training.TrainingDto;
 
 import java.time.LocalDate;
 import java.util.List;

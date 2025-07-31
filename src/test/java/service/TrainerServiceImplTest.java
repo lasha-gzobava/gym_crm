@@ -1,9 +1,9 @@
 package service;
 
-import org.example.dto.CreateTrainerDto;
-import org.example.dto.CreateUserDto;
-import org.example.dto.PasswordChangeDto;
-import org.example.dto.TrainerDto;
+import org.example.dto.trainer.CreateTrainerDto;
+import org.example.dto.user.CreateUserDto;
+import org.example.dto.login.PasswordChangeDto;
+import org.example.dto.trainer.TrainerDto;
 import org.example.entity.Trainee;
 import org.example.entity.Trainer;
 import org.example.entity.TrainingType;
