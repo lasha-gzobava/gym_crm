@@ -2,7 +2,8 @@ package org.example.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.dto.training.CreateTrainingDto;
+import org.example.dto.training.TrainingAddDto;
+import org.example.dto.training.TrainingCreateDto;
 import org.example.dto.training.TrainingDto;
 import org.example.entity.Trainee;
 import org.example.entity.Trainer;
@@ -36,35 +37,26 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     @Transactional
-    public TrainingDto addTraining(CreateTrainingDto dto) {
-        log.info("Adding training: {}", dto.getTrainingName());
+    public void addTraining(TrainingAddDto dto, String password) {
 
-
-//        userService.authenticate(dto.getTrainerUsername(), dto.getTrainerPassword());
-
-        Trainer trainer = trainerRepository.findById(dto.getTrainerId())
-                .orElseThrow(() -> new RuntimeException("Trainer not found"));
-
-        Trainee trainee = traineeRepository.findById(dto.getTraineeId())
+        userService.authenticate(dto.getTrainerUsername(), password);
+        Trainee trainee = traineeRepository.findByUsername(dto.getTraineeUsername())
                 .orElseThrow(() -> new RuntimeException("Trainee not found"));
 
-        TrainingType trainingType = trainingTypeRepository.findById(dto.getTrainingTypeId())
-                .orElseThrow(() -> new RuntimeException("Training type not found"));
+        Trainer trainer = trainerRepository.findByUsername(dto.getTrainerUsername())
+                .orElseThrow(() -> new RuntimeException("Trainer not found"));
 
-        Training training = new Training(
-                trainee,
-                trainer,
-                dto.getTrainingName(),
-                trainingType,
-                dto.getTrainingDate(),
-                (long) dto.getTrainingDuration()
-        );
+        Training training = new Training();
+        training.setTrainee(trainee);
+        training.setTrainer(trainer);
+        training.setTrainingName(dto.getTrainingName());
+        training.setTrainingDate(dto.getTrainingDate());
+        training.setTrainingDuration(dto.getTrainingDuration());
+        training.setTrainingType(trainer.getSpecialization());
 
         trainingRepository.save(training);
-        log.info("Training added for trainee {} with trainer {}", trainee.getUser().getUsername(), trainer.getUser().getUsername());
-
-        return trainingMapper.toDto(training);
     }
+
 
     @Override
     public List<TrainingDto> getTrainingsForTrainee(String username, String password) {
@@ -112,6 +104,4 @@ public class TrainingServiceImpl implements TrainingService {
                 .map(trainingMapper::toDto)
                 .collect(Collectors.toList());
     }
-
-
 }

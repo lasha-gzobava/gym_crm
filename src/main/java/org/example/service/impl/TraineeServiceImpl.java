@@ -5,9 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.example.dto.trainee.*;
 import org.example.dto.login.PasswordChangeDto;
-import org.example.entity.Trainee;
-import org.example.entity.Trainer;
-import org.example.entity.User;
+import org.example.dto.trainer.TrainerForTrainerListDto;
+import org.example.dto.trainer.TrainerInfoDto;
+import org.example.dto.training.TraineeTrainingRequestDto;
+import org.example.dto.training.TraineeTrainingResponseDto;
+import org.example.entity.*;
 import org.example.mapper.TraineeMapper;
 import org.example.repository.TraineeRepository;
 import org.example.repository.TrainerRepository;
@@ -15,7 +17,6 @@ import org.example.repository.TrainingRepository;
 import org.example.repository.UserRepository;
 import org.example.service.TraineeService;
 import org.example.service.UserService;
-import org.example.util.UsernamePasswordGenerator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,8 +38,8 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional
-    public TraineeDto createTrainee(CreateTraineeDto dto) {
-        log.info("Creating new trainee for {} {}", dto.getUser().getFirstName(), dto.getUser().getLastName());
+    public TraineeCredentialsDto registerWithCredentials(TraineeCreateDto dto) {
+        log.info("Registering trainee: {} {}", dto.getUser().getFirstName(), dto.getUser().getLastName());
 
         User user = userService.createUser(
                 dto.getUser().getFirstName(),
@@ -48,44 +49,20 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee trainee = new Trainee(dto.getDateOfBirth(), dto.getAddress(), user);
         traineeRepository.save(trainee);
 
-        log.info("Trainee created with username: {}", user.getUsername());
-        return traineeMapper.toDto(trainee);
-    }
-
-    @Override
-    @Transactional
-    public TraineeCredentialsDto registerWithCredentials(CreateTraineeDto dto) {
-        User user = userService.createUser(
-                dto.getUser().getFirstName(),
-                dto.getUser().getLastName()
-        );
-
-        Trainee trainee = new Trainee(dto.getDateOfBirth(), dto.getAddress(), user);
-        traineeRepository.save(trainee);
-
+        log.info("Trainee registered with username: {}", user.getUsername());
         return new TraineeCredentialsDto(user.getUsername(), userService.getRawPassword());
     }
 
-
-
     @Override
-    public TraineeDto getByUsername(String username, String password) {
-        log.debug("Authenticating and fetching trainee by username: {}", username);
+    public TraineeProfileDto getTraineeProfile(String username, String password) {
+        log.debug("Fetching profile for trainee: {}", username);
         userService.authenticate(username, password);
 
         Trainee trainee = traineeRepository.findByUsername(username)
                 .orElseThrow(() -> {
-                    log.warn("Trainee not found: {}", username);
+                    log.error("Trainee not found: {}", username);
                     return new RuntimeException("Trainee not found");
                 });
-
-        return traineeMapper.toDto(trainee);
-    }
-
-    @Override
-    public TraineeProfileDto getTraineeProfile(String username) {
-        Trainee trainee = traineeRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Trainee not found"));
 
         List<TrainerInfoDto> trainerDtos = trainee.getTrainers().stream()
                 .map(x -> new TrainerInfoDto(
@@ -97,6 +74,7 @@ public class TraineeServiceImpl implements TraineeService {
 
         User user = trainee.getUser();
 
+        log.debug("Returning profile for trainee: {}", username);
         return new TraineeProfileDto(
                 user.getFirstName(),
                 user.getLastName(),
@@ -108,9 +86,15 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
-    public TraineeProfileDto updateProfile(TraineeProfileUpdateDto dto) {
+    public TraineeProfileDto updateProfile(TraineeProfileUpdateDto dto, String password) {
+        log.info("Updating profile for trainee: {}", dto.getUsername());
+        userService.authenticate(dto.getUsername(), password);
+
         Trainee trainee = traineeRepository.findByUsername(dto.getUsername())
-                .orElseThrow(() -> new RuntimeException("Trainee not found"));
+                .orElseThrow(() -> {
+                    log.error("Trainee not found during update: {}", dto.getUsername());
+                    return new RuntimeException("Trainee not found");
+                });
 
         User user = trainee.getUser();
         user.setUsername(dto.getUsername());
@@ -120,6 +104,8 @@ public class TraineeServiceImpl implements TraineeService {
         if (dto.getAddress() != null) trainee.setAddress(dto.getAddress());
         user.setIsActive(dto.getIsActive());
 
+        log.info("Profile updated for trainee: {}", dto.getUsername());
+
         List<TrainerInfoDto> trainerDtos = trainee.getTrainers().stream()
                 .map(x -> new TrainerInfoDto(
                         x.getUser().getUsername(),
@@ -140,44 +126,15 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional
-    public void changePassword(PasswordChangeDto dto) {
-        userService.changePassword(dto.getUsername(), dto.getOldPassword(), dto.getNewPassword());
-    }
-
-    @Override
-    @Transactional
-    public void updateTrainee(String username, CreateTraineeDto dto, String password) {
-        log.info("Updating trainee profile: {}", username);
-        userService.authenticate(username, password);
-
-        Trainee trainee = traineeRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Trainee not found"));
-
-        trainee.getUser().setFirstName(dto.getUser().getFirstName());
-        trainee.getUser().setLastName(dto.getUser().getLastName());
-        trainee.setAddress(dto.getAddress());
-        trainee.setDateOfBirth(dto.getDateOfBirth());
-
-        traineeRepository.save(trainee);
-        log.info("Trainee updated: {}", username);
-    }
-
-    @Override
-    @Transactional
-    public void toggleActive(String username, String password) {
-        log.info("Toggling active status for trainee: {}", username);
-        userService.authenticate(username, password);
-        userService.toggleActive(username);
-    }
-
-    @Override
-    @Transactional
     public void deleteByUsername(String username, String password) {
-        log.warn("Deleting trainee with auth check: {}", username);
+        log.warn("Attempting to delete trainee: {}", username);
         userService.authenticate(username, password);
 
         Trainee trainee = traineeRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Trainee not found"));
+                .orElseThrow(() -> {
+                    log.error("Trainee not found for deletion: {}", username);
+                    return new RuntimeException("Trainee not found");
+                });
 
         trainingRepository.deleteAllByTrainee(trainee);
         traineeRepository.delete(trainee);
@@ -185,37 +142,94 @@ public class TraineeServiceImpl implements TraineeService {
         log.warn("Trainee deleted: {}", username);
     }
 
-
     @Override
     @Transactional
-    public void updateAssignedTrainers(String username, List<Long> trainerIds) {
+    public void toggleActive(String username, boolean isActive, String password) {
+        log.info("Toggling active status for trainee: {} to {}", username, isActive);
+        userService.authenticate(username, password);
+
         Trainee trainee = traineeRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Trainee not found"));
+                .orElseThrow(() -> {
+                    log.error("Trainee not found to toggle active status: {}", username);
+                    return new RuntimeException("Trainee not found");
+                });
 
-        List<Trainer> newTrainers = trainerRepository.findAllById(trainerIds);
-        trainee.setTrainers(newTrainers);
-
-        traineeRepository.save(trainee);
+        trainee.getUser().setIsActive(isActive);
+        log.info("Active status set to {} for trainee: {}", isActive, username);
     }
 
     @Override
     @Transactional
-    public void updateTrainersList(String traineeUsername, List<Long> trainerIds) {
-        log.info("Updating trainers list for trainee: {}", traineeUsername);
+    public List<TrainerForTrainerListDto> updateTraineeTrainers(TraineeTrainerUpdateDto dto, String password) {
+        log.info("Updating trainers for trainee: {}", dto.getTraineeUsername());
+        userService.authenticate(dto.getTraineeUsername(), password);
 
-        Trainee trainee = traineeRepository.findByUsername(traineeUsername)
-                .orElseThrow(() -> new RuntimeException("Trainee not found"));
+        Trainee trainee = traineeRepository.findByUsername(dto.getTraineeUsername())
+                .orElseThrow(() -> {
+                    log.error("Trainee not found to update trainers: {}", dto.getTraineeUsername());
+                    return new RuntimeException("Trainee not found");
+                });
 
-        List<Trainer> trainers = trainerRepository.findAllById(trainerIds);
-        if (trainers.size() != trainerIds.size()) {
-            throw new RuntimeException("One or more trainer IDs are invalid.");
+        List<Trainer> trainers = trainerRepository.findAllByUser_UsernameIn(dto.getTrainerUsernames());
+        if (trainers.size() != dto.getTrainerUsernames().size()) {
+            log.error("Mismatch in provided trainers for trainee: {}", dto.getTraineeUsername());
+            throw new RuntimeException("Some trainer usernames not found");
         }
 
         trainee.setTrainers(trainers);
         traineeRepository.save(trainee);
 
-        log.info("Trainee '{}' trainers updated: {}", traineeUsername, trainerIds);
+        log.info("Updated trainers for trainee: {}", dto.getTraineeUsername());
+
+        return trainers.stream()
+                .map(t -> new TrainerForTrainerListDto(
+                        t.getUser().getUsername(),
+                        t.getUser().getFirstName(),
+                        t.getUser().getLastName(),
+                        t.getSpecialization().getTrainingTypeName()
+                ))
+                .toList();
     }
 
+    @Override
+    public List<TraineeTrainingResponseDto> getTraineeTrainingsList(TraineeTrainingRequestDto dto, String password) {
+        log.debug("Fetching trainings list for trainee: {}", dto.getUsername());
+        userService.authenticate(dto.getUsername(), password);
 
+        Trainee trainee = traineeRepository.findByUsername(dto.getUsername())
+                .orElseThrow(() -> {
+                    log.error("Trainee not found for training list: {}", dto.getUsername());
+                    return new RuntimeException("Trainee not found");
+                });
+
+        List<TraineeTrainingResponseDto> trainings = trainingRepository.findAllByTrainee(trainee).stream()
+                .filter(training -> {
+                    if (dto.getPeriodFrom() != null && training.getTrainingDate().isBefore(dto.getPeriodFrom())) {
+                        return false;
+                    }
+                    if (dto.getPeriodTo() != null && training.getTrainingDate().isAfter(dto.getPeriodTo())) {
+                        return false;
+                    }
+                    if (dto.getTrainerName() != null &&
+                            !training.getTrainer().getUser().getFirstName().equalsIgnoreCase(dto.getTrainerName())) {
+                        return false;
+                    }
+                    if (dto.getTrainingType() != null &&
+                            !training.getTrainingType().getTrainingTypeName().equalsIgnoreCase(dto.getTrainingType())) {
+                        return false;
+                    }
+                    return true;
+                })
+                .map(training -> new TraineeTrainingResponseDto(
+                        training.getTrainingName(),
+                        training.getTrainingDate(),
+                        training.getTrainingType().getTrainingTypeName(),
+                        training.getTrainingDuration(),
+                        training.getTrainer().getUser().getFirstName() + " " + training.getTrainer().getUser().getLastName()
+                ))
+                .toList();
+
+        log.debug("Returning {} trainings for trainee: {}", trainings.size(), dto.getUsername());
+        return trainings;
+    }
 }

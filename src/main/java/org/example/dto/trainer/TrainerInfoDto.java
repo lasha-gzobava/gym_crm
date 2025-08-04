@@ -1,4 +1,4 @@
-package org.example.dto.trainee;
+package org.example.dto.trainer;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

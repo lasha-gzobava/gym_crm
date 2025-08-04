@@ -13,25 +13,39 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity
 public class SecurityConfig {
 
+//    @Bean
+//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http
+//                .csrf(csrf -> csrf.disable())
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers(
+//                                "/auth/login",
+//                                "/auth/password",
+//                                "/trainee/register",
+//                                "/trainer/register",
+//                                "/trainee/profile",
+//                                "/trainee"
+//                        ).permitAll()
+//                        .anyRequest().authenticated()
+//                )
+//                .httpBasic(Customizer.withDefaults());
+//
+//
+//        return http.build();
+//    }
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/auth/login",
-                                "/auth/password",
-                                "/trainee/register",
-                                "/trainer/register",
-                                "trainee/profile"
-                        ).permitAll()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
-                .httpBasic(Customizer.withDefaults());
-
+                .httpBasic(Customizer.withDefaults()); // still there but doesn’t block requests
 
         return http.build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {

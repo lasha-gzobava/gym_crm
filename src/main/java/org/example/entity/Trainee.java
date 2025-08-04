@@ -42,4 +42,8 @@ public class Trainee {
         this.address = address;
         this.user = user;
     }
+
+
+
+
 }

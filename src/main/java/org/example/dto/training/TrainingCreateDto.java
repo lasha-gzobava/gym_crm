@@ -6,7 +6,7 @@ import lombok.Data;
 import java.time.LocalDate;
 
 @Data
-public class CreateTrainingDto {
+public class TrainingCreateDto {
 
     @NotBlank(message = "Training name must not be empty.")
     private String trainingName;

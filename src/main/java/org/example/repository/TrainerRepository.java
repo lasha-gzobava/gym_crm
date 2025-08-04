@@ -3,6 +3,7 @@ package org.example.repository;
 
 
 import org.example.entity.Trainer;
+import org.example.entity.Training;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,4 +19,8 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
     @Query("SELECT tr FROM Trainer tr WHERE tr NOT IN (" +
             "SELECT t.trainer FROM Training t WHERE t.trainee.user.username = :traineeUsername)")
     List<Trainer> findTrainersNotAssignedToTrainee(@Param("traineeUsername") String traineeUsername);
+    List<Trainer> findAllByUser_UsernameIn(List<String> usernames);
+
+
+
 }

@@ -19,10 +19,9 @@ import org.springframework.web.bind.annotation.*;
 @Tag(name = "Authentication", description = "User authentication and password change")
 public class AuthController {
 
-    private final TraineeService traineeService;
-    private final TrainerService trainerService;
+
     private final UserService userService;
-    private final TrainingService trainingService;
+
 
     @GetMapping("/login")
     public ResponseEntity<String> login(

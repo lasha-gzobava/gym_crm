@@ -5,8 +5,8 @@ import org.example.entity.User;
 public interface UserService {
     User createUser(String firstName, String lastName);
     void changePassword(String username, String oldPassword, String newPassword);
-    void toggleActive(String username);
+    void setActiveStatus(String username, boolean isActive);
     User getByUsername(String username);
     User authenticate(String username, String password);
-    String getRawPassword(); // will be used to fetch the latest generated password
+    String getRawPassword();
 }

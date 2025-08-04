@@ -69,12 +69,13 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void toggleActive(String username) {
+    public void setActiveStatus(String username, boolean isActive) {
         User user = getByUsername(username);
-        user.setIsActive(!user.getIsActive());
+        user.setIsActive(isActive);
         userRepository.save(user);
-        log.info("Toggled active status: {} → {}", username, user.getIsActive());
+        log.info("Set active status of {} to {}", username, isActive);
     }
+
 
     @Override
     public User getByUsername(String username) {

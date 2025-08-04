@@ -2,6 +2,7 @@ package org.example.dto.trainee;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.example.dto.trainer.TrainerInfoDto;
 
 import java.time.LocalDate;
 import java.util.List;

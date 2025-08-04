@@ -8,10 +8,12 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface TraineeRepository extends JpaRepository<Trainee, Long> {
     @Query("SELECT t FROM Trainee t WHERE t.user.username = :username")
+
     Optional<Trainee> findByUsername(@Param("username") String username);
 
     @Query("""
@@ -22,6 +24,9 @@ public interface TraineeRepository extends JpaRepository<Trainee, Long> {
 """)
     Optional<Trainee> findWithTrainersByUserUsername(@Param("username") String username);
 
+
+
+    List<Trainee> findAllByTrainers_User_Username(String username);
 
 
     @Modifying

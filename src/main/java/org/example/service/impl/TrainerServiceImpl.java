@@ -2,19 +2,16 @@ package org.example.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.dto.trainee.CreateTraineeDto;
 import org.example.dto.trainee.TraineeCredentialsDto;
-import org.example.dto.trainer.CreateTrainerDto;
-import org.example.dto.login.PasswordChangeDto;
-import org.example.dto.trainer.TrainerDto;
+import org.example.dto.trainee.TraineeInfoDto;
+import org.example.dto.trainer.*;
+import org.example.dto.training.TrainerTrainingRequestDto;
+import org.example.dto.training.TrainerTrainingResponseDto;
 import org.example.entity.Trainee;
 import org.example.entity.Trainer;
 import org.example.entity.TrainingType;
 import org.example.entity.User;
-import org.example.mapper.TrainerMapper;
-import org.example.repository.TraineeRepository;
-import org.example.repository.TrainerRepository;
-import org.example.repository.TrainingTypeRepository;
+import org.example.repository.*;
 import org.example.service.TrainerService;
 import org.example.service.UserService;
 import org.springframework.stereotype.Service;
@@ -30,50 +27,37 @@ public class TrainerServiceImpl implements TrainerService {
     private final TrainerRepository trainerRepository;
     private final TrainingTypeRepository trainingTypeRepository;
     private final TraineeRepository traineeRepository;
-    private final TrainerMapper trainerMapper;
     private final UserService userService;
+    private final UserRepository userRepository;
+    private final TrainingRepository trainingRepository;
 
     @Override
     @Transactional
-    public TrainerDto createTrainer(CreateTrainerDto dto) {
-        log.info("Creating new trainer for {} {}", dto.getUser().getFirstName(), dto.getUser().getLastName());
-
-        TrainingType specialization = trainingTypeRepository.findByTrainingTypeName(dto.getSpecialization())
-                .orElseThrow(() -> new RuntimeException("Specialization not found"));
+    public TraineeCredentialsDto registerWithCredentials(TrainerCreateDto dto) {
+        log.info("Registering trainer: {} {}", dto.getFirstName(), dto.getLastName());
 
         User user = userService.createUser(
-                dto.getUser().getFirstName(),
-                dto.getUser().getLastName()
+                dto.getFirstName(),
+                dto.getLastName()
         );
+        userRepository.save(user);
+
+        TrainingType specialization = trainingTypeRepository.findByTrainingTypeName(dto.getSpecialization())
+                .orElseThrow(() -> {
+                    log.error("Specialization not found: {}", dto.getSpecialization());
+                    return new RuntimeException("Specialization not found");
+                });
 
         Trainer trainer = new Trainer(specialization, user);
         trainerRepository.save(trainer);
 
-        log.info("Trainer created with username: {}", user.getUsername());
-        return trainerMapper.toDto(trainer);
-    }
-
-    @Override
-    public TraineeCredentialsDto registerWithCredentials(CreateTrainerDto dto) {
-        User user = userService.createUser(
-                dto.getUser().getFirstName(),
-                dto.getUser().getLastName()
-        );
-
-        TrainingType specialization = trainingTypeRepository.findByTrainingTypeName(dto.getSpecialization())
-                .orElseThrow(() -> new RuntimeException("Specialization not found"));
-
-        Trainer trainer = new Trainer(
-                specialization,
-                user
-        );
-
+        log.info("Trainer registered successfully with username: {}", user.getUsername());
         return new TraineeCredentialsDto(user.getUsername(), userService.getRawPassword());
     }
 
     @Override
-    public TrainerDto getByUsername(String username, String password) {
-        log.debug("Authenticating and fetching trainer: {}", username);
+    public TrainerProfileDto getTrainerProfile(String username, String password) {
+        log.debug("Fetching profile for trainer: {}", username);
         userService.authenticate(username, password);
 
         Trainer trainer = trainerRepository.findByUsername(username)
@@ -82,65 +66,135 @@ public class TrainerServiceImpl implements TrainerService {
                     return new RuntimeException("Trainer not found");
                 });
 
-        return trainerMapper.toDto(trainer);
+        List<Trainee> traineeList = traineeRepository.findAllByTrainers_User_Username(username);
+
+        List<TraineeInfoDto> trainees = traineeList.stream()
+                .map(trainee -> new TraineeInfoDto(
+                        trainee.getUser().getUsername(),
+                        trainee.getUser().getFirstName(),
+                        trainee.getUser().getLastName()
+                )).toList();
+
+        log.info("Trainer profile retrieved for username: {}", username);
+        return new TrainerProfileDto(
+                trainer.getUser().getUsername(),
+                trainer.getUser().getFirstName(),
+                trainer.getUser().getLastName(),
+                trainer.getSpecialization().getTrainingTypeName(),
+                trainer.getUser().getIsActive(),
+                trainees
+        );
     }
 
     @Override
     @Transactional
-    public void changePassword(PasswordChangeDto dto) {
-        userService.changePassword(dto.getUsername(), dto.getOldPassword(), dto.getNewPassword());
-    }
+    public TrainerProfileDto updateTrainerProfile(TrainerUpdateDto dto, String password) {
+        log.info("Updating profile for trainer: {}", dto.getUsername());
+        userService.authenticate(dto.getUsername(), password);
 
-    @Override
-    @Transactional
-    public void updateTrainer(String username, CreateTrainerDto dto, String password) {
-        log.info("Updating trainer: {}", username);
-        userService.authenticate(username, password);
+        Trainer trainer = trainerRepository.findByUsername(dto.getUsername())
+                .orElseThrow(() -> {
+                    log.error("Trainer not found during update: {}", dto.getUsername());
+                    return new RuntimeException("Trainer not found");
+                });
 
-        Trainer trainer = trainerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Trainer not found"));
-
-        trainer.getUser().setFirstName(dto.getUser().getFirstName());
-        trainer.getUser().setLastName(dto.getUser().getLastName());
+        User user = trainer.getUser();
+        user.setUsername(dto.getUsername());
+        user.setFirstName(dto.getFirstName());
+        user.setLastName(dto.getLastName());
 
         TrainingType specialization = trainingTypeRepository.findByTrainingTypeName(dto.getSpecialization())
-                .orElseThrow(() -> new RuntimeException("Specialization not found"));
+                .orElseThrow(() -> {
+                    log.error("Specialization not found during profile update: {}", dto.getSpecialization());
+                    return new RuntimeException("Specialization not found");
+                });
 
         trainer.setSpecialization(specialization);
-        trainerRepository.save(trainer);
-        log.info("Trainer updated: {}", username);
+        user.setIsActive(dto.getIsActive());
+
+        List<Trainee> traineeList = traineeRepository.findAllByTrainers_User_Username(dto.getUsername());
+        List<TraineeInfoDto> trainees = traineeList.stream()
+                .map(trainee -> new TraineeInfoDto(
+                        trainee.getUser().getUsername(),
+                        trainee.getUser().getFirstName(),
+                        trainee.getUser().getLastName()
+                )).toList();
+
+        log.info("Trainer profile updated for: {}", dto.getUsername());
+
+        return new TrainerProfileDto(
+                trainer.getUser().getUsername(),
+                trainer.getUser().getFirstName(),
+                trainer.getUser().getLastName(),
+                trainer.getSpecialization().getTrainingTypeName(),
+                trainer.getUser().getIsActive(),
+                trainees
+        );
     }
 
     @Override
     @Transactional
-    public void toggleActive(String username, String password) {
+    public void toggleActive(String username, boolean isActive, String password) {
+        log.info("Toggling trainer '{}' active status to: {}", username, isActive);
         userService.authenticate(username, password);
-        userService.toggleActive(username);
+        userService.setActiveStatus(username, isActive);
+        log.info("Trainer '{}' active status set to: {}", username, isActive);
     }
 
     @Override
-    @Transactional
-    public void deleteByUsername(String username, String password) {
-        log.warn("Deleting trainer by username: {}", username);
-        userService.authenticate(username, password);
+    public List<TrainerForTrainerListDto> getUnassignedTrainersForTrainee(String traineeUsername, String password) {
+        log.debug("Fetching unassigned trainers for trainee: {}", traineeUsername);
+        userService.authenticate(traineeUsername, password);
 
-        Trainer trainer = trainerRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Trainer not found"));
-
-        trainerRepository.delete(trainer);
-        log.warn("Trainer deleted: {}", username);
-    }
-
-    public List<TrainerDto> getUnassignedTrainersForTrainee(String traineeUsername) {
         Trainee trainee = traineeRepository.findWithTrainersByUserUsername(traineeUsername)
-                .orElseThrow(() -> new RuntimeException("Trainee not found"));
+                .orElseThrow(() -> {
+                    log.warn("Trainee not found: {}", traineeUsername);
+                    return new RuntimeException("Trainee not found");
+                });
 
         List<Trainer> allTrainers = trainerRepository.findAll();
 
-        return allTrainers.stream()
+        List<TrainerForTrainerListDto> result = allTrainers.stream()
                 .filter(trainer -> !trainee.getTrainers().contains(trainer))
-                .map(trainerMapper::toDto)
-                .toList();
+                .map(trainer -> new TrainerForTrainerListDto(
+                        trainer.getUser().getUsername(),
+                        trainer.getUser().getFirstName(),
+                        trainer.getUser().getLastName(),
+                        trainer.getSpecialization().getTrainingTypeName()
+                )).toList();
+
+        log.info("Found {} unassigned trainers for trainee: {}", result.size(), traineeUsername);
+        return result;
+    }
+
+    @Override
+    public List<TrainerTrainingResponseDto> getTrainerTrainingsList(TrainerTrainingRequestDto dto, String password) {
+        log.debug("Fetching trainings for trainer: {}", dto.getUsername());
+        userService.authenticate(dto.getUsername(), password);
+
+        Trainer trainer = trainerRepository.findByUsername(dto.getUsername())
+                .orElseThrow(() -> {
+                    log.warn("Trainer not found when fetching trainings: {}", dto.getUsername());
+                    return new RuntimeException("Trainer not found");
+                });
+
+        List<TrainerTrainingResponseDto> result = trainingRepository.findAllByTrainer(trainer).stream()
+                .filter(training -> {
+                    if (dto.getPeriodFrom() != null && training.getTrainingDate().isBefore(dto.getPeriodFrom())) return false;
+                    if (dto.getPeriodTo() != null && training.getTrainingDate().isAfter(dto.getPeriodTo())) return false;
+                    return dto.getTraineeName() == null ||
+                            training.getTrainee().getUser().getFullName().equalsIgnoreCase(dto.getTraineeName());
+                })
+                .map(training -> new TrainerTrainingResponseDto(
+                        training.getTrainingName(),
+                        training.getTrainingDate(),
+                        training.getTrainingType().getTrainingTypeName(),
+                        training.getTrainingDuration(),
+                        training.getTrainee().getUser().getFullName()
+                )).toList();
+
+        log.info("Returning {} trainings for trainer: {}", result.size(), dto.getUsername());
+        return result;
     }
 
 }

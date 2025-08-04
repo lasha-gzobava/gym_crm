@@ -1,19 +1,15 @@
-package org.example.dto.user;
+package org.example.dto.trainer;
 
-
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.example.dto.user.UserCreateDto;
 
 @Data
 @AllArgsConstructor
-public class CreateUserDto {
-
-    @NotBlank(message = "First name is required.")
+public class TrainerCreateDto {
     private String firstName;
-
-    @NotBlank(message = "Last name is required.")
     private String lastName;
-
-
+    private String specialization;
 }

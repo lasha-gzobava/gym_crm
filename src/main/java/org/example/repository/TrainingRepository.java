@@ -3,6 +3,7 @@ package org.example.repository;
 
 
 import org.example.entity.Trainee;
+import org.example.entity.Trainer;
 import org.example.entity.Training;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -15,4 +16,7 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
     Optional<Training> findByTrainerUserUsername(String username);
     void deleteAllByTrainee(Trainee trainee);
     List<Training> findAllByTrainee(Trainee trainee);
+
+    List<Training> findAllByTrainer(Trainer trainer);
+
 }
