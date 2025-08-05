@@ -2,6 +2,7 @@ package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.dto.trainee.TraineeCredentialsDto;
@@ -28,7 +29,8 @@ public class TrainerController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new trainer and return generated credentials")
-    public ResponseEntity<TraineeCredentialsDto> register(@RequestBody TrainerCreateDto dto) {
+    public ResponseEntity<TraineeCredentialsDto> register(
+            @Valid @RequestBody TrainerCreateDto dto) {
         String tx = UUID.randomUUID().toString();
         log.info("[{}] Attempting to register trainer: {} {}", tx, dto.getFirstName(), dto.getLastName());
         try {
@@ -124,7 +126,7 @@ public class TrainerController {
     @PatchMapping("/activate")
     @Operation(summary = "Toggle trainer's active status (authentication required)")
     public ResponseEntity<String> toggleTrainerActive(
-            @RequestBody TrainerActivationDto dto,
+            @Valid @RequestBody TrainerActivationDto dto,
             @RequestParam String password
     ) {
         log.info("Request to change active status for trainer: {} -> {}", dto.getUsername(), dto.getIsActive());

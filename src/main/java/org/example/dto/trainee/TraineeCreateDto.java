@@ -1,10 +1,9 @@
 package org.example.dto.trainee;
 
-
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.example.dto.user.UserCreateDto;
-
 
 import java.time.LocalDate;
 
@@ -14,5 +13,6 @@ public class TraineeCreateDto {
     private LocalDate dateOfBirth;
 
     @Valid
+    @NotNull(message = "User information must be provided")
     private UserCreateDto user;
 }

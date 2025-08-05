@@ -2,6 +2,7 @@ package org.example.controller;
 
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.dto.training.TrainingAddDto;
@@ -21,7 +22,7 @@ public class TrainingController {
 
     @PostMapping("/add")
     public ResponseEntity<String> addTraining(
-            @RequestBody TrainingAddDto dto,
+            @Valid @RequestBody TrainingAddDto dto,
             @RequestParam String password
     ) {
         try {

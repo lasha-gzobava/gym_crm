@@ -1,6 +1,7 @@
 package org.example.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.dto.login.PasswordChangeDto;
@@ -40,7 +41,8 @@ public class AuthController {
     }
 
     @PutMapping("/password")
-    public ResponseEntity<String> changePassword(@RequestBody PasswordChangeDto dto) {
+    public ResponseEntity<String> changePassword(
+            @Valid @RequestBody PasswordChangeDto dto) {
         log.info("Password change attempt for user: {}", dto.getUsername());
         try {
             userService.changePassword(dto.getUsername(), dto.getOldPassword(), dto.getNewPassword());

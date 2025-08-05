@@ -2,6 +2,7 @@ package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.dto.trainee.*;
@@ -33,7 +34,8 @@ public class TraineeController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new trainee and receive credentials")
-    public ResponseEntity<TraineeCredentialsDto> register(@RequestBody TraineeCreateDto dto) {
+    public ResponseEntity<TraineeCredentialsDto> register(
+            @Valid @RequestBody TraineeCreateDto dto) {
         String tx = UUID.randomUUID().toString();
         log.info("[{}] Registering trainee: {} {}", tx, dto.getUser().getFirstName(), dto.getUser().getLastName());
         TraineeCredentialsDto credentials = traineeService.registerWithCredentials(dto);
@@ -63,7 +65,7 @@ public class TraineeController {
     @PutMapping("/profile")
     @Operation(summary = "Update trainee profile (requires password)")
     public ResponseEntity<TraineeProfileDto> updateProfile(
-            @RequestBody TraineeProfileUpdateDto dto,
+            @Valid @RequestBody TraineeProfileUpdateDto dto,
             @RequestParam String password
     ) {
         String tx = UUID.randomUUID().toString();
@@ -81,7 +83,7 @@ public class TraineeController {
     @DeleteMapping
     @Operation(summary = "Delete trainee account (requires password)")
     public ResponseEntity<String> deleteProfile(
-            @RequestBody TraineeDeleteRequestDto dto,
+            @Valid @RequestBody TraineeDeleteRequestDto dto,
             @RequestParam String password
     ) {
         String tx = UUID.randomUUID().toString();
@@ -102,7 +104,7 @@ public class TraineeController {
     @PutMapping("/trainers")
     @Operation(summary = "Update list of trainers assigned to trainee (requires password)")
     public ResponseEntity<List<TrainerForTrainerListDto>> updateTraineeTrainers(
-            @RequestBody TraineeTrainerUpdateDto dto,
+            @Valid @RequestBody TraineeTrainerUpdateDto dto,
             @RequestParam String password
     ) {
         String tx = UUID.randomUUID().toString();
@@ -153,7 +155,7 @@ public class TraineeController {
     @PatchMapping("/activate")
     @Operation(summary = "Activate or deactivate trainee (requires password)")
     public ResponseEntity<String> toggleTraineeActive(
-            @RequestBody TraineeActivationDto dto,
+            @Valid @RequestBody TraineeActivationDto dto,
             @RequestParam String password
     ) {
         String tx = UUID.randomUUID().toString();
