@@ -3,6 +3,8 @@ package org.example.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.entity.User;
+import org.example.repository.TraineeRepository;
+import org.example.repository.TrainerRepository;
 import org.example.repository.UserRepository;
 import org.example.service.UserService;
 import org.example.util.UsernamePasswordGenerator;
@@ -21,13 +23,19 @@ public class UserServiceImpl implements UserService {
     private String lastRawPassword;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
 
     @Override
     public User createUser(String firstName, String lastName) {
-        List<String> existing = userRepository.findAll()
+        List<String> existingUsernames = userRepository.findAll()
                 .stream().map(User::getUsername).toList();
 
-        String username = UsernamePasswordGenerator.generateUniqueUsername(firstName, lastName, existing);
+        String username;
+        do {
+            username = UsernamePasswordGenerator.generateUniqueUsername(firstName, lastName, existingUsernames);
+        } while (traineeRepository.existsByUsername(username) || trainerRepository.existsByUsername(username));
+
         String rawPassword = UsernamePasswordGenerator.generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(rawPassword);
 
@@ -45,6 +53,7 @@ public class UserServiceImpl implements UserService {
         log.info("Created user: {} with password: {}", username, rawPassword);
         return user;
     }
+
 
     @Override
     public String getRawPassword() {
@@ -88,5 +97,6 @@ public class UserServiceImpl implements UserService {
                 .filter(u -> passwordEncoder.matches(password, u.getPassword()))
                 .orElseThrow(() -> new RuntimeException("Invalid username or password"));
     }
+
 
 }

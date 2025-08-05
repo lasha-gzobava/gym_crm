@@ -99,7 +99,13 @@ public class TrainerServiceImpl implements TrainerService {
                 });
 
         User user = trainer.getUser();
-        user.setUsername(dto.getUsername());
+
+        //Username should be unchanged
+        if (!dto.getUsername().equals(user.getUsername())) {
+            log.error("Attempted to change username from {} to {}", user.getUsername(), dto.getUsername());
+            throw new IllegalArgumentException("Username cannot be changed.");
+        }
+
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
 
@@ -134,12 +140,27 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @Transactional
-    public void toggleActive(String username, boolean isActive, String password) {
+    public boolean toggleActive(String username, boolean isActive, String password) {
         log.info("Toggling trainer '{}' active status to: {}", username, isActive);
         userService.authenticate(username, password);
-        userService.setActiveStatus(username, isActive);
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> {
+                    log.error("User not found for trainer toggle: {}", username);
+                    return new RuntimeException("User not found");
+                });
+
+        if (Boolean.TRUE.equals(user.getIsActive()) == isActive) {
+            log.info("Trainer {} is already {}", username, isActive ? "active" : "inactive");
+            return false;
+        }
+
+        user.setIsActive(isActive);
         log.info("Trainer '{}' active status set to: {}", username, isActive);
+        return true;
     }
+
+
 
     @Override
     public List<TrainerForTrainerListDto> getUnassignedTrainersForTrainee(String traineeUsername, String password) {

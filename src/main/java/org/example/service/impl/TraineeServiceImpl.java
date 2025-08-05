@@ -43,6 +43,7 @@ public class TraineeServiceImpl implements TraineeService {
                 dto.getUser().getLastName()
         );
 
+
         Trainee trainee = new Trainee(dto.getDateOfBirth(), dto.getAddress(), user);
         traineeRepository.save(trainee);
 
@@ -94,7 +95,13 @@ public class TraineeServiceImpl implements TraineeService {
                 });
 
         User user = trainee.getUser();
-        user.setUsername(dto.getUsername());
+
+        //Username should be unchanged
+        if (!dto.getUsername().equals(user.getUsername())) {
+            log.error("Username change attempt detected for: {}", dto.getUsername());
+            throw new IllegalArgumentException("Username cannot be changed.");
+        }
+
         user.setFirstName(dto.getFirstName());
         user.setLastName(dto.getLastName());
         if (dto.getDateOfBirth() != null) trainee.setDateOfBirth(dto.getDateOfBirth());
@@ -142,7 +149,7 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     @Transactional
-    public void toggleActive(String username, boolean isActive, String password) {
+    public boolean toggleActive(String username, boolean isActive, String password) {
         log.info("Toggling active status for trainee: {} to {}", username, isActive);
         userService.authenticate(username, password);
 
@@ -152,9 +159,16 @@ public class TraineeServiceImpl implements TraineeService {
                     return new RuntimeException("Trainee not found");
                 });
 
+        if (Boolean.TRUE.equals(trainee.getUser().getIsActive()) == isActive) {
+            log.info("Trainee {} is already {}", username, isActive ? "active" : "inactive");
+            return false; // No update needed
+        }
+
         trainee.getUser().setIsActive(isActive);
         log.info("Active status set to {} for trainee: {}", isActive, username);
+        return true;
     }
+
 
     @Override
     @Transactional
