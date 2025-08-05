@@ -51,7 +51,6 @@ public class UserServiceImpl implements UserService {
         return lastRawPassword;
     }
 
-
     @Override
     public void changePassword(String username, String oldPassword, String newPassword) {
         log.info("Received request to change password for: {}", username);

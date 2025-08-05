@@ -4,13 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.example.dto.trainee.*;
-import org.example.dto.login.PasswordChangeDto;
 import org.example.dto.trainer.TrainerForTrainerListDto;
 import org.example.dto.trainer.TrainerInfoDto;
 import org.example.dto.training.TraineeTrainingRequestDto;
 import org.example.dto.training.TraineeTrainingResponseDto;
 import org.example.entity.*;
-import org.example.mapper.TraineeMapper;
 import org.example.repository.TraineeRepository;
 import org.example.repository.TrainerRepository;
 import org.example.repository.TrainingRepository;
@@ -29,7 +27,6 @@ import java.util.List;
 public class TraineeServiceImpl implements TraineeService {
 
     private final TraineeRepository traineeRepository;
-    private final TraineeMapper traineeMapper;
     private final TrainerRepository trainerRepository;
     private final UserService userService;
     private final TrainingRepository trainingRepository;

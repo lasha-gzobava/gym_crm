@@ -18,7 +18,7 @@ public class TrainingType {
     @Column(name = "trainingtypename", nullable = false, unique = true) // maps to your DB column exactly
     private String trainingTypeName;
 
-    public TrainingType(String trainingTypeName) {
+    public TrainingType(long l, String trainingTypeName) {
         this.trainingTypeName = trainingTypeName;
     }
 }

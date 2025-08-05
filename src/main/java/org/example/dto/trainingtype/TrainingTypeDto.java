@@ -6,6 +6,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class TrainingTypeDto {
-    private Long trainingTypeId;
+    private long trainingTypeId;
     private String trainingType;
 }

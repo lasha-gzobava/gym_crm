@@ -17,6 +17,7 @@ public interface TrainingRepository extends JpaRepository<Training, Long> {
     void deleteAllByTrainee(Trainee trainee);
     List<Training> findAllByTrainee(Trainee trainee);
 
+
     List<Training> findAllByTrainer(Trainer trainer);
 
 }
