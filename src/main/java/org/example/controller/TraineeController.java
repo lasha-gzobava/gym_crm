@@ -83,13 +83,12 @@ public class TraineeController {
     @DeleteMapping
     @Operation(summary = "Delete trainee account (requires password)")
     public ResponseEntity<String> deleteProfile(
-            @Valid @RequestBody TraineeDeleteRequestDto dto,
-            @RequestParam String password
+            @Valid @RequestBody TraineeDeleteRequestDto dto
     ) {
         String tx = UUID.randomUUID().toString();
         log.warn("[{}] Attempting to delete trainee: {}", tx, dto.getUsername());
         try {
-            traineeService.deleteByUsername(dto.getUsername(), password);
+            traineeService.deleteByUsername(dto.getUsername(), dto.getPassword());
             log.warn("[{}] Successfully deleted trainee: {}", tx, dto.getUsername());
             return ResponseEntity.ok("Trainee " + dto.getUsername() + " deleted successfully");
         } catch (RuntimeException e) {

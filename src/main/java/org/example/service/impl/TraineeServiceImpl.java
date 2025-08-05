@@ -111,6 +111,7 @@ public class TraineeServiceImpl implements TraineeService {
                         x.getSpecialization().getTrainingTypeName()
                 )).toList();
 
+        traineeRepository.save(trainee);
         return new TraineeProfileDto(
                 user.getFirstName(),
                 user.getLastName(),

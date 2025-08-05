@@ -100,7 +100,7 @@ class TraineeControllerTest {
         TraineeDeleteRequestDto dto = new TraineeDeleteRequestDto("john", "pass");
         doNothing().when(traineeService).deleteByUsername(anyString(), anyString());
 
-        ResponseEntity<String> response = traineeController.deleteProfile(dto, "pass");
+        ResponseEntity<String> response = traineeController.deleteProfile(dto);
         assertEquals(200, response.getStatusCodeValue());
     }
 
@@ -108,7 +108,7 @@ class TraineeControllerTest {
     void deleteProfile_failure_not_found() {
         doThrow(new RuntimeException("fail")).when(traineeService).deleteByUsername(any(), any());
 
-        ResponseEntity<String> response = traineeController.deleteProfile(new TraineeDeleteRequestDto("john", "pass"), "pass");
+        ResponseEntity<String> response = traineeController.deleteProfile(new TraineeDeleteRequestDto("john", "pass"));
         assertEquals(404, response.getStatusCodeValue());
     }
 
