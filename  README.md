@@ -1,88 +1,118 @@
 
-# Gym CRM System (Hibernate Edition)
 
-A Spring Core + Hibernate-based CRM system for managing trainees, trainers, and training sessions with full persistence using PostgreSQL and layered architecture.
 
----
 
-## Features
+# Gym Training Management System
 
-* **Trainee Management**: CRUD operations
-* **Trainer Management**: CRU operations
-* **Training Sessions**: Creation and listing
-* **Training Types**: Seeded and assignable
-* **User Handling**: Unique usernames, active status toggle, and secure hashed passwords
-* **Database Seeding**: Automatic JSON-based data import on startup
+A **Spring Boot**-based REST API for managing trainees, trainers, trainings, and user accounts. The system handles authentication, active status toggling, profile updates, and training schedules — all built on a secure and modular layered architecture.
 
 ---
 
-## Architecture
+##  Features
 
-* **Spring Core** (no Spring Boot)
-* **JPA with Hibernate**
-* **Layered Design**:
+* **Trainee Management**
+  Register, view, update, delete, activate/deactivate, assign trainers
 
-  * **Repository Layer** (`JpaRepository` interfaces)
-  * **Service Layer** (business logic)
-  * **Facade Layer** (`GymFacade` as unified API)
-* **Entities**: Fully normalized, with relationships (e.g. `@ManyToOne`, `@OneToOne`)
-* **Transactional Management**: Spring’s `@Transactional` for consistency
-* **Seed File Integration**: Uses `@PostConstruct` to load demo data
+* **Trainer Management**
+  Register, view, update, activate/deactivate, list unassigned trainers
+
+* **Training Management**
+  View trainings by filters (period, type, trainer, trainee)
+
+* **User Authentication**
+  Password-secured access, active user check, bcrypt encryption
+
+* **Logging**
+  Transactional logging with trace IDs (`UUID`) for traceability
+
+* **Swagger/OpenAPI**
+  Documented via annotations (`@Operation`, `@Tag`) for easy testing
 
 ---
 
-## Structure
+##  Architecture
+
+* **Spring Boot**
+* **Layered Architecture**
+
+  * `Controller` – REST endpoints
+  * `Service` – Business logic
+  * `Repository` – JPA + Spring Data
+  * `DTO` – Decoupled API contracts
+* **Auth** – Manual validation using `UserService`
+* **Logging** – Via `Slf4j` in all layers
+* **Validation** – JSON structure + basic null/empty checks
+
+---
+
+##  Project Structure
 
 ```
 src/main/java/org/example/
-├── config/
-├── dto/
-├── entity/
-├── repository/
-├── service/
-├── facade/
-├── seed/
-└── Demo.java
+├── controller/          # REST controllers
+├── dto/                 # Data Transfer Objects
+├── entity/              # JPA Entities
+├── repository/          # Spring Data Repos
+├── service/             # Service interfaces & impl
+├── util/                # Utilities (e.g., password generator)
+└── GymTrainingApp.java  # Spring Boot entrypoint
 ```
 
 ---
 
-## Testing
+##  Testing
 
-* Built with **JUnit 5** and **Mockito**
-* Coverage includes:
+* **JUnit 5** + **Mockito**
+* Test coverage includes:
 
-  * Service & Repository logic
-  * Facade layer (integration)
-  * Seed loader verification
+  * Service layer logic
+  * Authentication logic
+  * Integration-style controller tests
 
 Run tests:
 
 ```bash
-mvn clean test
+mvn test
 ```
 
 ---
 
-## Setup
+##  API Usage
 
-* **PostgreSQL** required (default DB: `gym_crm`)
-* Configure DB connection in `application.properties`:
+ Use Postman or Swagger UI to test:
 
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/gym_crm
-spring.datasource.username=postgres
-spring.datasource.password=your_password
+### Authentication Format
+
+> All endpoints requiring auth must include `username` and `password` as query parameters.
+
+```http
+GET /trainee/profile?username=john.doe&password=password
+```
+
+### JSON Example – Register Trainee
+
+```json
+POST /trainee/register
+{
+  "user": {
+    "firstName": "John",
+    "lastName": "Doe"
+  },
+  "dateOfBirth": "2000-01-01",
+  "address": "123 Main St"
+}
 ```
 
 ---
 
 ## Summary
 
-* Modular, layered architecture using **Hibernate ORM**
-* Clean integration with PostgreSQL
-* Easy-to-extend, well-tested structure
-* Includes real-world concerns like cascade deletes, validation, and seeding
+*  Clean modular Spring Boot app
+*  Secure auth with bcrypt and manual control
+*  Fully testable service structure
+*  DTOs ensure loose coupling
+*  Logging everywhere for debug and trace
 
 ---
+
 
