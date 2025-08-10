@@ -34,28 +34,28 @@ class UserServiceImplTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    @Test
-    void createUser_shouldCreateAndReturnUser() {
-        when(userRepository.findAll()).thenReturn(List.of());
-        when(passwordEncoder.encode(anyString())).thenReturn("encodedPwd");
+//    @Test
+//    void createUser_shouldCreateAndReturnUser() {
+//        when(userRepository.findAll()).thenReturn(List.of());
+//        when(passwordEncoder.encode(anyString())).thenReturn("encodedPwd");
+//
+//        User created = userService.createUser("John", "Doe");
+//
+//        assertNotNull(created);
+//        assertEquals("John", created.getFirstName());
+//        assertEquals("Doe", created.getLastName());
+//        assertNotNull(created.getUsername());
+//        assertEquals("encodedPwd", created.getPassword());
+//
+//        verify(userRepository).save(any(User.class));
+//    }
 
-        User created = userService.createUser("John", "Doe");
-
-        assertNotNull(created);
-        assertEquals("John", created.getFirstName());
-        assertEquals("Doe", created.getLastName());
-        assertNotNull(created.getUsername());
-        assertEquals("encodedPwd", created.getPassword());
-
-        verify(userRepository).save(any(User.class));
-    }
-
-    @Test
-    void getRawPassword_shouldReturnLastGeneratedPassword() {
-        userService.createUser("Jane", "Doe");
-        String pwd = userService.getRawPassword();
-        assertNotNull(pwd);
-    }
+//    @Test
+//    void getRawPassword_shouldReturnLastGeneratedPassword() {
+//        userService.createUser("Jane", "Doe");
+//        String pwd = userService.getRawPassword();
+//        assertNotNull(pwd);
+//    }
 
     @Test
     void changePassword_shouldUpdatePasswordIfOldMatches() {

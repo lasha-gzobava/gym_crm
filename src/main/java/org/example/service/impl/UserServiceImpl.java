@@ -34,7 +34,7 @@ public class UserServiceImpl implements UserService {
         String username;
         do {
             username = UsernamePasswordGenerator.generateUniqueUsername(firstName, lastName, existingUsernames);
-        } while (traineeRepository.existsByUsername(username) || trainerRepository.existsByUsername(username));
+        } while (traineeRepository.existsByUser_Username(username) || trainerRepository.existsByUser_Username(username));
 
         String rawPassword = UsernamePasswordGenerator.generateRandomPassword();
         String encodedPassword = passwordEncoder.encode(rawPassword);

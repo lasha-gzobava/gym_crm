@@ -15,6 +15,7 @@ import org.example.repository.TrainingRepository;
 import org.example.repository.UserRepository;
 import org.example.service.TraineeService;
 import org.example.service.UserService;
+import org.example.util.UsernamePasswordGenerator;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,11 +39,19 @@ public class TraineeServiceImpl implements TraineeService {
     public TraineeCredentialsDto registerWithCredentials(TraineeCreateDto dto) {
         log.info("Registering trainee: {} {}", dto.getUser().getFirstName(), dto.getUser().getLastName());
 
+        // Check if already a trainer
+        String attemptedUsername = UsernamePasswordGenerator.generateStaticUsername(
+                dto.getUser().getFirstName(), dto.getUser().getLastName());
+
+        if (trainerRepository.existsByUser_Username(attemptedUsername)) {
+            log.warn("User already registered as a trainer.");
+            throw new IllegalStateException("User already registered as a trainer.");
+        }
+
         User user = userService.createUser(
                 dto.getUser().getFirstName(),
                 dto.getUser().getLastName()
         );
-
 
         Trainee trainee = new Trainee(dto.getDateOfBirth(), dto.getAddress(), user);
         traineeRepository.save(trainee);
@@ -51,7 +60,9 @@ public class TraineeServiceImpl implements TraineeService {
         return new TraineeCredentialsDto(user.getUsername(), userService.getRawPassword());
     }
 
+
     @Override
+    @Transactional
     public TraineeProfileDto getTraineeProfile(String username, String password) {
         log.debug("Fetching profile for trainee: {}", username);
         userService.authenticate(username, password);
@@ -84,6 +95,7 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
+    @Transactional
     public TraineeProfileDto updateProfile(TraineeProfileUpdateDto dto, String password) {
         log.info("Updating profile for trainee: {}", dto.getUsername());
         userService.authenticate(dto.getUsername(), password);

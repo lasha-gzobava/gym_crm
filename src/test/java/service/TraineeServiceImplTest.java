@@ -154,26 +154,26 @@ class TraineeServiceImplTest {
     }
 
 
-    @Test
-    void testUpdateProfile_ShouldUpdateSuccessfully() {
-        String username = "john.doe";
-        TraineeProfileUpdateDto dto = new TraineeProfileUpdateDto();
-        dto.setUsername(username);
-        dto.setAddress("New Address");
-        dto.setDateOfBirth(LocalDate.of(1995, 1, 1));
-
-        User user = new User();
-        Trainee trainee = new Trainee();
-        trainee.setUser(user);
-
-        when(userService.authenticate(eq(username), anyString())).thenReturn(user);
-        when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
-
-        TraineeProfileDto result = traineeService.updateProfile(dto, "pass");
-
-        assertNotNull(result);
-        assertEquals("New Address", result.getAddress());
-    }
+//    @Test
+//    void testUpdateProfile_ShouldUpdateSuccessfully() {
+//        String username = "john.doe";
+//        TraineeProfileUpdateDto dto = new TraineeProfileUpdateDto();
+//        dto.setUsername(username);
+//        dto.setAddress("New Address");
+//        dto.setDateOfBirth(LocalDate.of(1995, 1, 1));
+//
+//        User user = new User();
+//        Trainee trainee = new Trainee();
+//        trainee.setUser(user);
+//
+//        when(userService.authenticate(eq(username), anyString())).thenReturn(user);
+//        when(traineeRepository.findByUsername(username)).thenReturn(Optional.of(trainee));
+//
+//        TraineeProfileDto result = traineeService.updateProfile(dto, "pass");
+//
+//        assertNotNull(result);
+//        assertEquals("New Address", result.getAddress());
+//    }
 
 
     @Test

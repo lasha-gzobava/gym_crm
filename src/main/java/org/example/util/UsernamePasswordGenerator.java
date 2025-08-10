@@ -16,6 +16,11 @@ public class UsernamePasswordGenerator {
     // Set this to true to enable hardcoded password for testing/demo
     private static final boolean DEMO_MODE = true;
 
+    public static String generateStaticUsername(String firstName, String lastName) {
+        return firstName + "." + lastName;
+    }
+
+
     public static String generateUniqueUsername(String firstName, String lastName, List<String> existingUsernames) {
         String baseUsername = firstName + "." + lastName;
         String candidate = baseUsername;

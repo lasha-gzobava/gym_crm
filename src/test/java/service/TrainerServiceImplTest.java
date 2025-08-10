@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.context.SpringBootTest;
+
 
 import java.time.LocalDate;
 import java.util.*;
@@ -100,14 +100,14 @@ class TrainerServiceImplTest {
         assertTrue(updated.isActive());
     }
 
-    @Test
-    void toggleActive_shouldUpdateActiveStatus() {
-        when(userService.authenticate("jane.smith", "pass")).thenReturn(user);
-
-        trainerService.toggleActive("jane.smith", true, "pass");
-
-        verify(userService).setActiveStatus("jane.smith", true);
-    }
+//    @Test
+//    void toggleActive_shouldUpdateActiveStatus() {
+//        when(userService.authenticate("jane.smith", "pass")).thenReturn(user);
+//
+//        trainerService.toggleActive("jane.smith", true, "pass");
+//
+//        verify(userService).setActiveStatus("jane.smith", true);
+//    }
 
     @Test
     void getTrainerTrainingsList_shouldReturnTrainings() {

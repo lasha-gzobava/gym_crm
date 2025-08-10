@@ -20,7 +20,8 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
             "SELECT t.trainer FROM Training t WHERE t.trainee.user.username = :traineeUsername)")
     List<Trainer> findTrainersNotAssignedToTrainee(@Param("traineeUsername") String traineeUsername);
     List<Trainer> findAllByUser_UsernameIn(List<String> usernames);
-    boolean existsByUsername(String username);
+    boolean existsByUser_Username(String username); // ✅ Correct
+
 
 
 }

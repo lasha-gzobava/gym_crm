@@ -34,6 +34,7 @@ public interface TraineeRepository extends JpaRepository<Trainee, Long> {
     void deleteByUsername(String username);
 
     Optional<Trainee> findByUserUsername(String username);
-    boolean existsByUsername(String username);
+    boolean existsByUser_Username(String username);
+
 
 }

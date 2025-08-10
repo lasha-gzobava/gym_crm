@@ -14,6 +14,7 @@ import org.example.entity.User;
 import org.example.repository.*;
 import org.example.service.TrainerService;
 import org.example.service.UserService;
+import org.example.util.UsernamePasswordGenerator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,24 +37,27 @@ public class TrainerServiceImpl implements TrainerService {
     public TraineeCredentialsDto registerWithCredentials(TrainerCreateDto dto) {
         log.info("Registering trainer: {} {}", dto.getFirstName(), dto.getLastName());
 
-        User user = userService.createUser(
-                dto.getFirstName(),
-                dto.getLastName()
-        );
-        userRepository.save(user);
+        // Check if already a trainee
+        String attemptedUsername = UsernamePasswordGenerator.generateStaticUsername(
+                dto.getFirstName(), dto.getLastName());
+
+        if (traineeRepository.existsByUser_Username(attemptedUsername)) {
+            log.warn("User already registered as a trainee.");
+            throw new IllegalStateException("User already registered as a trainee.");
+        }
+
+        User user = userService.createUser(dto.getFirstName(), dto.getLastName());
 
         TrainingType specialization = trainingTypeRepository.findByTrainingTypeName(dto.getSpecialization())
-                .orElseThrow(() -> {
-                    log.error("Specialization not found: {}", dto.getSpecialization());
-                    return new RuntimeException("Specialization not found");
-                });
+                .orElseThrow(() -> new RuntimeException("Specialization not found"));
 
         Trainer trainer = new Trainer(specialization, user);
         trainerRepository.save(trainer);
 
-        log.info("Trainer registered successfully with username: {}", user.getUsername());
+        log.info("Trainer registered with username: {}", user.getUsername());
         return new TraineeCredentialsDto(user.getUsername(), userService.getRawPassword());
     }
+
 
     @Override
     public TrainerProfileDto getTrainerProfile(String username, String password) {

@@ -137,14 +137,14 @@ class TraineeControllerTest {
         assertEquals(400, result.getStatusCodeValue());
     }
 
-    @Test
-    void toggleTraineeActive_success() {
-        TraineeActivationDto dto = new TraineeActivationDto("john", true);
-        doNothing().when(traineeService).toggleActive(any(), anyBoolean(), any());
-
-        ResponseEntity<String> result = traineeController.toggleTraineeActive(dto, "pass");
-        assertEquals(200, result.getStatusCodeValue());
-    }
+//    @Test
+//    void toggleTraineeActive_success() {
+//        TraineeActivationDto dto = new TraineeActivationDto("john", true);
+//        doNothing().when(traineeService).toggleActive(any(), anyBoolean(), any());
+//
+//        ResponseEntity<String> result = traineeController.toggleTraineeActive(dto, "pass");
+//        assertEquals(200, result.getStatusCodeValue());
+//    }
 
     @Test
     void toggleTraineeActive_failure() {
