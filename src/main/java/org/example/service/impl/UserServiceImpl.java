@@ -50,7 +50,7 @@ public class UserServiceImpl implements UserService {
             e.printStackTrace();
         }
 
-        log.info("Created user: {} with password: {}", username, rawPassword);
+        log.info("Created user: {} ", username);
         return user;
     }
 

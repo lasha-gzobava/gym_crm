@@ -9,12 +9,17 @@ import org.example.dto.training.TraineeTrainingResponseDto;
 import org.example.entity.User;
 import org.example.service.TraineeService;
 import org.example.service.UserService;
+import org.example.util.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 
 import java.time.LocalDate;
 import java.util.Collections;
@@ -22,6 +27,9 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 
 class TraineeControllerTest {
 
@@ -33,10 +41,15 @@ class TraineeControllerTest {
 
     @InjectMocks
     private TraineeController traineeController;
+    MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(traineeController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     @Test
@@ -67,12 +80,16 @@ class TraineeControllerTest {
     }
 
     @Test
-    void getProfile_failure() {
-        when(userService.authenticate(any(), any())).thenThrow(new RuntimeException("Auth fail"));
+    void getProfile_failure() throws Exception {
+        when(userService.authenticate(anyString(), anyString()))
+                .thenThrow(new RuntimeException("Auth fail"));
 
-        ResponseEntity<TraineeProfileDto> result = traineeController.getProfile("x", "y");
-        assertEquals(404, result.getStatusCodeValue());
+        mockMvc.perform(get("/trainee/profile")
+                        .param("username", "x")
+                        .param("password", "y"))
+                .andExpect(status().isNotFound());
     }
+
 
     @Test
     void updateProfile_success() {
@@ -88,11 +105,13 @@ class TraineeControllerTest {
     }
 
     @Test
-    void updateProfile_failure() {
-        when(traineeService.updateProfile(any(), any())).thenThrow(new RuntimeException("not found"));
-
-        ResponseEntity<TraineeProfileDto> result = traineeController.updateProfile(new TraineeProfileUpdateDto(), "pass");
-        assertEquals(404, result.getStatusCodeValue());
+    void updateProfile_validationError_returns400_fromAdvice() throws Exception {
+        // service won't be called because validation fails first
+        mockMvc.perform(put("/trainee/profile")
+                        .param("password", "pass")
+                        .contentType("application/json")
+                        .content("{\"username\":\"john\"}"))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -105,12 +124,23 @@ class TraineeControllerTest {
     }
 
     @Test
-    void deleteProfile_failure_not_found() {
-        doThrow(new RuntimeException("fail")).when(traineeService).deleteByUsername(any(), any());
+    void deleteProfile_failure_not_found_fromAdvice() throws Exception {
+        doThrow(new RuntimeException("fail"))
+                .when(traineeService).deleteByUsername(any(), any());
 
-        ResponseEntity<String> response = traineeController.deleteProfile(new TraineeDeleteRequestDto("john", "pass"));
-        assertEquals(404, response.getStatusCodeValue());
+        String json = """
+      {
+        "username": "john",
+        "password": "pass"
+      }
+      """;
+
+        mockMvc.perform(delete("/trainee")
+                        .contentType("application/json")
+                        .content(json))
+                .andExpect(status().isNotFound());
     }
+
 
     @Test
     void updateTrainers_success() {
@@ -124,34 +154,62 @@ class TraineeControllerTest {
     }
 
     @Test
-    void updateTrainers_failure() {
-        when(traineeService.updateTraineeTrainers(any(), any())).thenThrow(new RuntimeException("fail"));
-        ResponseEntity<List<TrainerForTrainerListDto>> response = traineeController.updateTraineeTrainers(new TraineeTrainerUpdateDto(), "pass");
-        assertEquals(404, response.getStatusCodeValue());
+    void updateTrainers_failure_fromAdvice() throws Exception {
+        // given
+        doThrow(new RuntimeException("fail"))
+                .when(traineeService).updateTraineeTrainers(any(), any());
+
+        String json = """
+    {
+      "traineeUsername": "john",
+      "trainerUsernames": ["t1","t2"]
+    }
+    """;
+
+        mockMvc.perform(put("/trainee/trainers")
+                        .param("password", "pass")
+                        .contentType("application/json")
+                        .content(json))
+                .andExpect(status().isNotFound());
     }
 
+
     @Test
-    void getTrainings_invalidDateFormat() {
-        ResponseEntity<List<TraineeTrainingResponseDto>> result = traineeController.getTraineeTrainings(
-                "john", "invalid-date", null, null, null, "pass");
-        assertEquals(400, result.getStatusCodeValue());
+    void getTrainings_invalidDateFormat() throws Exception {
+        mockMvc.perform(get("/trainee/trainings")
+                        .param("username", "john")
+                        .param("periodFrom", "invalid-date")   // <-- correct name
+                        .param("password", "pass"))
+                .andExpect(status().isBadRequest());
     }
 
-//    @Test
-//    void toggleTraineeActive_success() {
-//        TraineeActivationDto dto = new TraineeActivationDto("john", true);
-//        doNothing().when(traineeService).toggleActive(any(), anyBoolean(), any());
-//
-//        ResponseEntity<String> result = traineeController.toggleTraineeActive(dto, "pass");
-//        assertEquals(200, result.getStatusCodeValue());
-//    }
+
 
     @Test
-    void toggleTraineeActive_failure() {
-        doThrow(new RuntimeException("fail")).when(traineeService).toggleActive(any(), anyBoolean(), any());
+    void toggleTraineeActive_success() {
 
-        ResponseEntity<String> result = traineeController.toggleTraineeActive(
-                new TraineeActivationDto("john", false), "pass");
-        assertEquals(404, result.getStatusCodeValue());
+        TraineeActivationDto dto = new TraineeActivationDto("john", true);
+        when(traineeService.toggleActive(anyString(), anyBoolean(), anyString()))
+                .thenReturn(true); // <- returns boolean, not void
+
+
+        ResponseEntity<String> result = traineeController.toggleTraineeActive(dto, "pass");
+
+
+        assertEquals(200, result.getStatusCodeValue());
+    }
+
+
+
+    @Test
+    void toggleTraineeActive_failure() throws Exception {
+        when(traineeService.toggleActive(anyString(), anyBoolean(), anyString()))
+                .thenThrow(new RuntimeException("fail"));
+
+        mockMvc.perform(patch("/trainee/activate")
+                        .param("password", "pass")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"john\",\"isActive\":false}"))
+                .andExpect(status().isNotFound());
     }
 }

@@ -12,6 +12,7 @@ import org.example.dto.training.TrainerTrainingResponseDto;
 import org.example.service.TrainerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ import java.util.UUID;
 @RequestMapping("/trainer")
 @RequiredArgsConstructor
 @Slf4j
+@Validated
 @Tag(name = "Trainer Management", description = "Endpoints for managing trainer accounts, profiles, and trainings")
 public class TrainerController {
 
@@ -29,21 +31,12 @@ public class TrainerController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new trainer and return generated credentials")
-    public ResponseEntity<TraineeCredentialsDto> register(
-            @Valid @RequestBody TrainerCreateDto dto) {
+    public ResponseEntity<TraineeCredentialsDto> register(@Valid @RequestBody TrainerCreateDto dto) {
         String tx = UUID.randomUUID().toString();
         log.info("[{}] Attempting to register trainer: {} {}", tx, dto.getFirstName(), dto.getLastName());
-        try {
-            TraineeCredentialsDto credentials = trainerService.registerWithCredentials(dto);
-            log.info("[{}] Trainer registered successfully with username: {}", tx, credentials.getUsername());
-            return ResponseEntity.status(HttpStatus.CREATED).body(credentials);
-        } catch (RuntimeException e) {
-            log.error("[{}] Trainer registration failed for {}: {}", tx, dto.getFirstName(), e.getMessage());
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            log.error("[{}] Unexpected error during trainer registration", tx, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        TraineeCredentialsDto credentials = trainerService.registerWithCredentials(dto);
+        log.info("[{}] Trainer registered successfully with username: {}", tx, credentials.getUsername());
+        return ResponseEntity.status(HttpStatus.CREATED).body(credentials);
     }
 
     @GetMapping("/profile")
@@ -53,31 +46,21 @@ public class TrainerController {
             @RequestParam String password
     ) {
         log.info("Fetching profile for trainer: {}", username);
-        try {
-            TrainerProfileDto profile = trainerService.getTrainerProfile(username, password);
-            log.info("Successfully fetched profile for trainer: {}", username);
-            return ResponseEntity.ok(profile);
-        } catch (RuntimeException e) {
-            log.warn("Trainer profile fetch failed for {}: {}", username, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        TrainerProfileDto profile = trainerService.getTrainerProfile(username, password);
+        log.info("Successfully fetched profile for trainer: {}", username);
+        return ResponseEntity.ok(profile);
     }
 
     @PutMapping("/profile")
     @Operation(summary = "Update trainer profile (authentication required)")
     public ResponseEntity<TrainerProfileDto> updateTrainer(
-            @RequestBody TrainerUpdateDto dto,
+            @Valid @RequestBody TrainerUpdateDto dto,
             @RequestParam String password
     ) {
         log.info("Updating profile for trainer: {}", dto.getUsername());
-        try {
-            TrainerProfileDto profile = trainerService.updateTrainerProfile(dto, password);
-            log.info("Profile updated successfully for trainer: {}", dto.getUsername());
-            return ResponseEntity.ok(profile);
-        } catch (RuntimeException e) {
-            log.warn("Trainer update failed for {}: {}", dto.getUsername(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        TrainerProfileDto profile = trainerService.updateTrainerProfile(dto, password);
+        log.info("Profile updated successfully for trainer: {}", dto.getUsername());
+        return ResponseEntity.ok(profile);
     }
 
     @GetMapping("/unassigned")
@@ -87,14 +70,9 @@ public class TrainerController {
             @RequestParam String password
     ) {
         log.info("Fetching unassigned trainers for trainee: {}", username);
-        try {
-            List<TrainerForTrainerListDto> unassigned = trainerService.getUnassignedTrainersForTrainee(username, password);
-            log.info("Found {} unassigned trainers for trainee: {}", unassigned.size(), username);
-            return ResponseEntity.ok(unassigned);
-        } catch (RuntimeException e) {
-            log.warn("Failed to fetch unassigned trainers for {}: {}", username, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        List<TrainerForTrainerListDto> unassigned = trainerService.getUnassignedTrainersForTrainee(username, password);
+        log.info("Found {} unassigned trainers for trainee: {}", unassigned.size(), username);
+        return ResponseEntity.ok(unassigned);
     }
 
     @GetMapping("/trainings")
@@ -107,20 +85,15 @@ public class TrainerController {
             @RequestParam String password
     ) {
         log.info("Fetching trainings for trainer: {}", username);
-        try {
-            TrainerTrainingRequestDto dto = new TrainerTrainingRequestDto(
-                    username,
-                    periodFrom != null ? LocalDate.parse(periodFrom) : null,
-                    periodTo != null ? LocalDate.parse(periodTo) : null,
-                    traineeName
-            );
-            List<TrainerTrainingResponseDto> trainings = trainerService.getTrainerTrainingsList(dto, password);
-            log.info("Returned {} trainings for trainer: {}", trainings.size(), username);
-            return ResponseEntity.ok(trainings);
-        } catch (RuntimeException e) {
-            log.warn("Failed to fetch trainings for {}: {}", username, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        TrainerTrainingRequestDto dto = new TrainerTrainingRequestDto(
+                username,
+                periodFrom != null ? LocalDate.parse(periodFrom) : null,
+                periodTo != null ? LocalDate.parse(periodTo) : null,
+                traineeName
+        );
+        List<TrainerTrainingResponseDto> trainings = trainerService.getTrainerTrainingsList(dto, password);
+        log.info("Returned {} trainings for trainer: {}", trainings.size(), username);
+        return ResponseEntity.ok(trainings);
     }
 
     @PatchMapping("/activate")
@@ -130,13 +103,8 @@ public class TrainerController {
             @RequestParam String password
     ) {
         log.info("Request to change active status for trainer: {} -> {}", dto.getUsername(), dto.getIsActive());
-        try {
-            trainerService.toggleActive(dto.getUsername(), dto.getIsActive(), password);
-            log.info("Trainer {} is now {}", dto.getUsername(), dto.getIsActive() ? "active" : "inactive");
-            return ResponseEntity.ok("Trainer " + dto.getUsername() + " is now " + (dto.getIsActive() ? "active" : "inactive"));
-        } catch (RuntimeException e) {
-            log.warn("Failed to update active status for trainer {}: {}", dto.getUsername(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Trainer not found or update failed.");
-        }
+        trainerService.toggleActive(dto.getUsername(), dto.getIsActive(), password);
+        log.info("Trainer {} is now {}", dto.getUsername(), dto.getIsActive() ? "active" : "inactive");
+        return ResponseEntity.ok("Trainer " + dto.getUsername() + " is now " + (dto.getIsActive() ? "active" : "inactive"));
     }
 }

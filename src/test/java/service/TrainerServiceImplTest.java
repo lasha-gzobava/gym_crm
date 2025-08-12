@@ -100,14 +100,59 @@ class TrainerServiceImplTest {
         assertTrue(updated.isActive());
     }
 
-//    @Test
-//    void toggleActive_shouldUpdateActiveStatus() {
-//        when(userService.authenticate("jane.smith", "pass")).thenReturn(user);
-//
-//        trainerService.toggleActive("jane.smith", true, "pass");
-//
-//        verify(userService).setActiveStatus("jane.smith", true);
-//    }
+    @Test
+    void toggleActive_shouldUpdateActiveStatus_fromFalseToTrue_returnsTrue() {
+        String username = "jane.smith";
+        String pwd = "pass";
+        User user = new User();
+        user.setUsername(username);
+        user.setIsActive(false);
+
+        // authenticate is called, but we don’t use its return; just let it pass
+        when(userService.authenticate(username, pwd)).thenReturn(user);
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+
+        boolean changed = trainerService.toggleActive(username, true, pwd);
+
+        assertTrue(changed);
+        assertEquals(true, user.getIsActive());
+        verify(userService).authenticate(username, pwd);
+        verify(userRepository).findByUsername(username);
+        verifyNoMoreInteractions(userRepository, userService);
+    }
+
+
+    @Test
+    void toggleActive_whenAlreadyActive_returnsFalse_andDoesNotChange() {
+        String username = "jane.smith";
+        String pwd = "pass";
+        User user = new User();
+        user.setUsername(username);
+        user.setIsActive(true); // already active
+
+        when(userService.authenticate(username, pwd)).thenReturn(user);
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+
+        boolean changed = trainerService.toggleActive(username, true, pwd);
+
+        assertFalse(changed);
+        assertEquals(true, user.getIsActive()); // unchanged
+        verify(userService).authenticate(username, pwd);
+        verify(userRepository).findByUsername(username);
+    }
+
+    @Test
+    void toggleActive_userNotFound_throwsRuntime() {
+        String username = "missing.user";
+        String pwd = "pass";
+
+        when(userService.authenticate(username, pwd)).thenReturn(new User());
+        when(userRepository.findByUsername(username)).thenReturn(Optional.empty());
+
+        RuntimeException ex = assertThrows(RuntimeException.class,
+                () -> trainerService.toggleActive(username, true, pwd));
+        assertEquals("User not found", ex.getMessage());
+    }
 
     @Test
     void getTrainerTrainingsList_shouldReturnTrainings() {

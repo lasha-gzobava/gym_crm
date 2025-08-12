@@ -1,6 +1,8 @@
 package service;
 
 import org.example.entity.User;
+import org.example.repository.TraineeRepository;
+import org.example.repository.TrainerRepository;
 import org.example.repository.UserRepository;
 import org.example.service.impl.UserServiceImpl;
 import org.example.util.UsernamePasswordGenerator;
@@ -29,33 +31,65 @@ class UserServiceImplTest {
     @Captor
     private ArgumentCaptor<User> userCaptor;
 
+    @Mock
+    TraineeRepository traineeRepository;
+    @Mock
+    TrainerRepository trainerRepository;
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
     }
 
-//    @Test
-//    void createUser_shouldCreateAndReturnUser() {
-//        when(userRepository.findAll()).thenReturn(List.of());
-//        when(passwordEncoder.encode(anyString())).thenReturn("encodedPwd");
-//
-//        User created = userService.createUser("John", "Doe");
-//
-//        assertNotNull(created);
-//        assertEquals("John", created.getFirstName());
-//        assertEquals("Doe", created.getLastName());
-//        assertNotNull(created.getUsername());
-//        assertEquals("encodedPwd", created.getPassword());
-//
-//        verify(userRepository).save(any(User.class));
-//    }
 
-//    @Test
-//    void getRawPassword_shouldReturnLastGeneratedPassword() {
-//        userService.createUser("Jane", "Doe");
-//        String pwd = userService.getRawPassword();
-//        assertNotNull(pwd);
-//    }
+    @Test
+    void createUser_shouldCreateAndReturnUser() {
+        // existing usernames -> empty
+        when(userRepository.findAll()).thenReturn(List.of());
+        // ensure username isn't flagged as taken by trainee/trainer
+        when(traineeRepository.existsByUser_Username(anyString())).thenReturn(false);
+        when(trainerRepository.existsByUser_Username(anyString())).thenReturn(false);
+        // encode any raw password to a known value
+        when(passwordEncoder.encode(anyString())).thenReturn("encodedPwd");
+        // have save return the same user (typical Mockito pattern)
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        User created = userService.createUser("John", "Doe");
+
+        assertNotNull(created);
+        assertEquals("John", created.getFirstName());
+        assertEquals("Doe", created.getLastName());
+        assertNotNull(created.getUsername(), "username must be generated");
+        assertEquals("encodedPwd", created.getPassword());
+
+        verify(userRepository).findAll();
+        verify(traineeRepository, atLeastOnce()).existsByUser_Username(anyString());
+        verify(trainerRepository, atLeastOnce()).existsByUser_Username(anyString());
+        verify(passwordEncoder).encode(anyString());
+        verify(userRepository).save(any(User.class));
+        verifyNoMoreInteractions(userRepository, traineeRepository, trainerRepository, passwordEncoder);
+    }
+
+    @Test
+    void getRawPassword_shouldReturnLastGeneratedPassword() {
+        // Arrange
+        when(userRepository.findAll()).thenReturn(List.of());
+        when(traineeRepository.existsByUser_Username(anyString())).thenReturn(false);
+        when(trainerRepository.existsByUser_Username(anyString())).thenReturn(false);
+
+        // Capture the random raw password that createUser() generates
+        ArgumentCaptor<String> rawCaptor = ArgumentCaptor.forClass(String.class);
+        when(passwordEncoder.encode(rawCaptor.capture())).thenReturn("enc");
+
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // Act
+        userService.createUser("Jane", "Doe");
+        String lastRaw = userService.getRawPassword();
+
+        // Assert
+        assertNotNull(lastRaw, "last raw password must be stored");
+        assertEquals(rawCaptor.getValue(), lastRaw, "stored raw password should match what was encoded");
+    }
 
     @Test
     void changePassword_shouldUpdatePasswordIfOldMatches() {
@@ -69,6 +103,24 @@ class UserServiceImplTest {
 
         assertEquals("encodedNewPwd", user.getPassword());
         verify(userRepository).save(user);
+    }
+
+
+    @Test
+    void changePassword_wrongOldPassword_throwsIllegalArgumentException() {
+        // arrange
+        String username = "john.doe";
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword("encoded-old");
+
+        when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
+        // oldPassword does NOT match stored hash
+        when(passwordEncoder.matches("WRONG_OLD", "encoded-old")).thenReturn(false);
+
+        // act + assert
+        assertThrows(IllegalArgumentException.class,
+                () -> userService.changePassword(username, "WRONG_OLD", "newOne!"));
     }
 
     @Test

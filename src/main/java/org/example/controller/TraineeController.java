@@ -35,12 +35,10 @@ public class TraineeController {
 
     @PostMapping("/register")
     @Operation(summary = "Register a new trainee and receive credentials")
-    public ResponseEntity<TraineeCredentialsDto> register(
-            @Valid @RequestBody TraineeCreateDto dto) {
-        String tx = UUID.randomUUID().toString();
-        log.info("[{}] Registering trainee: {} {}", tx, dto.getUser().getFirstName(), dto.getUser().getLastName());
+    public ResponseEntity<TraineeCredentialsDto> register(@Valid @RequestBody TraineeCreateDto dto) {
+        log.info("Registering trainee: {} {}", dto.getUser().getFirstName(), dto.getUser().getLastName());
         TraineeCredentialsDto credentials = traineeService.registerWithCredentials(dto);
-        log.info("[{}] Registration successful for: {}", tx, credentials.getUsername());
+        log.info("Registration successful for: {}", credentials.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(credentials);
     }
 
@@ -50,17 +48,11 @@ public class TraineeController {
             @RequestParam String username,
             @RequestParam String password
     ) {
-        String tx = UUID.randomUUID().toString();
-        log.info("[{}] Fetching profile for trainee: {}", tx, username);
-        try {
-            userService.authenticate(username, password);
-            TraineeProfileDto profile = traineeService.getTraineeProfile(username, password);
-            log.info("[{}] Profile fetch successful for: {}", tx, username);
-            return ResponseEntity.ok(profile);
-        } catch (RuntimeException e) {
-            log.warn("[{}] Failed to fetch profile for {}: {}", tx, username, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        log.info("Fetching profile for trainee: {}", username);
+        userService.authenticate(username, password);
+        TraineeProfileDto profile = traineeService.getTraineeProfile(username, password);
+        log.info("Profile fetch successful for: {}", username);
+        return ResponseEntity.ok(profile);
     }
 
     @PutMapping("/profile")
@@ -69,36 +61,19 @@ public class TraineeController {
             @Valid @RequestBody TraineeProfileUpdateDto dto,
             @RequestParam String password
     ) {
-        String tx = UUID.randomUUID().toString();
-        log.info("[{}] Updating profile for trainee: {}", tx, dto.getUsername());
-        try {
-            TraineeProfileDto update = traineeService.updateProfile(dto, password);
-            log.info("[{}] Profile update successful for: {}", tx, dto.getUsername());
-            return ResponseEntity.ok(update);
-        } catch (RuntimeException e) {
-            log.warn("[{}] Profile update failed for {}: {}", tx, dto.getUsername(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        log.info("Updating profile for trainee: {}", dto.getUsername());
+        TraineeProfileDto updated = traineeService.updateProfile(dto, password);
+        log.info("Profile update successful for: {}", dto.getUsername());
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping
     @Operation(summary = "Delete trainee account (requires password)")
-    public ResponseEntity<String> deleteProfile(
-            @Valid @RequestBody TraineeDeleteRequestDto dto
-    ) {
-        String tx = UUID.randomUUID().toString();
-        log.warn("[{}] Attempting to delete trainee: {}", tx, dto.getUsername());
-        try {
-            traineeService.deleteByUsername(dto.getUsername(), dto.getPassword());
-            log.warn("[{}] Successfully deleted trainee: {}", tx, dto.getUsername());
-            return ResponseEntity.ok("Trainee " + dto.getUsername() + " deleted successfully");
-        } catch (RuntimeException e) {
-            log.warn("[{}] Deletion failed for trainee {}: {}", tx, dto.getUsername(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Trainee not found or auth failed.");
-        } catch (Exception e) {
-            log.error("[{}] Unexpected error during trainee deletion: {}", tx, dto.getUsername(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting trainee.");
-        }
+    public ResponseEntity<String> deleteProfile(@Valid @RequestBody TraineeDeleteRequestDto dto) {
+        log.warn("Attempting to delete trainee: {}", dto.getUsername());
+        traineeService.deleteByUsername(dto.getUsername(), dto.getPassword());
+        log.warn("Successfully deleted trainee: {}", dto.getUsername());
+        return ResponseEntity.ok("Trainee " + dto.getUsername() + " deleted successfully");
     }
 
     @PutMapping("/trainers")
@@ -107,16 +82,10 @@ public class TraineeController {
             @Valid @RequestBody TraineeTrainerUpdateDto dto,
             @RequestParam String password
     ) {
-        String tx = UUID.randomUUID().toString();
-        log.info("[{}] Updating trainers for trainee: {}", tx, dto.getTraineeUsername());
-        try {
-            List<TrainerForTrainerListDto> updatedList = traineeService.updateTraineeTrainers(dto, password);
-            log.info("[{}] Trainer list updated for trainee: {}", tx, dto.getTraineeUsername());
-            return ResponseEntity.ok(updatedList);
-        } catch (RuntimeException e) {
-            log.warn("[{}] Failed to update trainer list for {}: {}", tx, dto.getTraineeUsername(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        log.info("Updating trainers for trainee: {}", dto.getTraineeUsername());
+        List<TrainerForTrainerListDto> updatedList = traineeService.updateTraineeTrainers(dto, password);
+        log.info("Trainer list updated for trainee: {}", dto.getTraineeUsername());
+        return ResponseEntity.ok(updatedList);
     }
 
     @GetMapping("/trainings")
@@ -129,27 +98,18 @@ public class TraineeController {
             @RequestParam(required = false) String trainingType,
             @RequestParam String password
     ) {
-        String tx = UUID.randomUUID().toString();
-        log.info("[{}] Fetching trainings for trainee: {}", tx, username);
-        try {
-            LocalDate from = periodFrom != null && !periodFrom.isBlank() ? LocalDate.parse(periodFrom) : null;
-            LocalDate to = periodTo != null && !periodTo.isBlank() ? LocalDate.parse(periodTo) : null;
+        log.info("Fetching trainings for trainee: {}", username);
 
-            TraineeTrainingRequestDto dto = new TraineeTrainingRequestDto(
-                    username, from, to, trainerName, trainingType
-            );
+        LocalDate from = (periodFrom == null || periodFrom.isBlank()) ? null : LocalDate.parse(periodFrom); // DateTimeParseException handled globally
+        LocalDate to   = (periodTo   == null || periodTo.isBlank())   ? null : LocalDate.parse(periodTo);
 
-            List<TraineeTrainingResponseDto> trainings = traineeService.getTraineeTrainingsList(dto, password);
-            log.info("[{}] Successfully fetched trainings for: {}", tx, username);
-            return ResponseEntity.ok(trainings);
+        TraineeTrainingRequestDto dto = new TraineeTrainingRequestDto(
+                username, from, to, trainerName, trainingType
+        );
 
-        } catch (DateTimeParseException e) {
-            log.warn("[{}] Invalid date format in request for {}: {}", tx, username, e.getMessage());
-            return ResponseEntity.badRequest().body(null);
-        } catch (RuntimeException e) {
-            log.warn("[{}] Failed to get trainings for {}: {}", tx, username, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        List<TraineeTrainingResponseDto> trainings = traineeService.getTraineeTrainingsList(dto, password);
+        log.info("Successfully fetched trainings for: {}", username);
+        return ResponseEntity.ok(trainings);
     }
 
     @PatchMapping("/activate")
@@ -158,15 +118,9 @@ public class TraineeController {
             @Valid @RequestBody TraineeActivationDto dto,
             @RequestParam String password
     ) {
-        String tx = UUID.randomUUID().toString();
-        log.info("[{}] Attempting to set active={} for trainee: {}", tx, dto.getIsActive(), dto.getUsername());
-        try {
-            traineeService.toggleActive(dto.getUsername(), dto.getIsActive(), password);
-            log.info("[{}] Trainee {} is now {}", tx, dto.getUsername(), dto.getIsActive() ? "active" : "inactive");
-            return ResponseEntity.ok("Trainee " + dto.getUsername() + " is now " + (dto.getIsActive() ? "active" : "inactive"));
-        } catch (RuntimeException e) {
-            log.warn("[{}] Failed to change activation for {}: {}", tx, dto.getUsername(), e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Trainee not found or error occurred.");
-        }
+        log.info("Attempting to set active={} for trainee: {}", dto.getIsActive(), dto.getUsername());
+        traineeService.toggleActive(dto.getUsername(), dto.getIsActive(), password);
+        log.info("Trainee {} is now {}", dto.getUsername(), dto.getIsActive() ? "active" : "inactive");
+        return ResponseEntity.ok("Trainee " + dto.getUsername() + " is now " + (dto.getIsActive() ? "active" : "inactive"));
     }
 }

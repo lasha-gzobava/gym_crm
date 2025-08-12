@@ -1,168 +1,223 @@
-
 package controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.example.controller.TrainerController;
 import org.example.dto.trainee.TraineeCredentialsDto;
 import org.example.dto.trainer.*;
+import org.example.dto.training.TrainerTrainingRequestDto;
 import org.example.dto.training.TrainerTrainingResponseDto;
 import org.example.service.TrainerService;
+import org.example.util.GlobalExceptionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.*;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.mockito.ArgumentMatchers;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class TrainerControllerTest {
 
-    @InjectMocks
-    private TrainerController trainerController;
-
-    @Mock
+    private MockMvc mockMvc;
     private TrainerService trainerService;
+    private ObjectMapper om;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        trainerService = mock(TrainerService.class);
+        TrainerController controller = new TrainerController(trainerService);
+
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(controller)
+                .setControllerAdvice(new GlobalExceptionHandler()) // <-- your handler
+                .build();
+
+        om = new ObjectMapper();
+        om.registerModule(new JavaTimeModule()); // for LocalDate in JSON
     }
 
+    /* -------------------- /trainer/register -------------------- */
+
     @Test
-    void register_ShouldReturnCreated_WhenValid() {
+    void register_ShouldReturnCreated_WhenValid() throws Exception {
         TrainerCreateDto dto = new TrainerCreateDto("John", "Doe", "Strength");
         TraineeCredentialsDto creds = new TraineeCredentialsDto("john.doe", "secret");
 
         when(trainerService.registerWithCredentials(dto)).thenReturn(creds);
 
-        ResponseEntity<TraineeCredentialsDto> response = trainerController.register(dto);
-
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertEquals(creds, response.getBody());
+        mockMvc.perform(post("/trainer/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(dto)))
+                .andExpect(status().isCreated())
+                .andExpect(content().json(om.writeValueAsString(creds)));
     }
 
     @Test
-    void register_ShouldReturnBadRequest_WhenRuntimeExceptionThrown() {
+    void register_ShouldReturnNotFound_WhenRuntimeException() throws Exception {
         TrainerCreateDto dto = new TrainerCreateDto("John", "Doe", "Strength");
+        when(trainerService.registerWithCredentials(dto)).thenThrow(new RuntimeException("boom"));
 
-        when(trainerService.registerWithCredentials(dto)).thenThrow(RuntimeException.class);
-
-        ResponseEntity<TraineeCredentialsDto> response = trainerController.register(dto);
-
-        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        mockMvc.perform(post("/trainer/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(dto)))
+                .andExpect(status().isNotFound()); // per your handler mapping RuntimeException -> 404
     }
 
+    /* -------------------- /trainer/profile (GET/PUT) -------------------- */
+
     @Test
-    void getTrainer_ShouldReturnProfile_WhenValid() {
-        TrainerProfileDto profile = new TrainerProfileDto("jane", "Jane", "Smith", "Cardio", true, List.of());
+    void getTrainer_ShouldReturnProfile_WhenValid() throws Exception {
+        TrainerProfileDto profile =
+                new TrainerProfileDto("jane", "Jane", "Smith", "Cardio", true, List.of());
 
         when(trainerService.getTrainerProfile("jane", "pwd")).thenReturn(profile);
 
-        ResponseEntity<TrainerProfileDto> response = trainerController.getTrainer("jane", "pwd");
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(profile, response.getBody());
+        mockMvc.perform(get("/trainer/profile")
+                        .param("username", "jane")
+                        .param("password", "pwd"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(om.writeValueAsString(profile)));
     }
 
     @Test
-    void getTrainer_ShouldReturnNotFound_WhenInvalid() {
-        when(trainerService.getTrainerProfile("jane", "pwd")).thenThrow(RuntimeException.class);
+    void getTrainer_ShouldReturnNotFound_WhenRuntimeException() throws Exception {
+        when(trainerService.getTrainerProfile("jane", "pwd")).thenThrow(new RuntimeException("nope"));
 
-        ResponseEntity<TrainerProfileDto> response = trainerController.getTrainer("jane", "pwd");
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        mockMvc.perform(get("/trainer/profile")
+                        .param("username", "jane")
+                        .param("password", "pwd"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
-    void updateTrainer_ShouldReturnUpdatedProfile_WhenValid() {
+    void updateTrainer_ShouldReturnUpdatedProfile_WhenValid() throws Exception {
         TrainerUpdateDto dto = new TrainerUpdateDto("jane", "Jane", "Smith", "Yoga", true);
-        TrainerProfileDto profile = new TrainerProfileDto("jane", "Jane", "Smith", "Yoga", true, List.of());
+        TrainerProfileDto profile =
+                new TrainerProfileDto("jane", "Jane", "Smith", "Yoga", true, List.of());
 
         when(trainerService.updateTrainerProfile(dto, "pwd")).thenReturn(profile);
 
-        ResponseEntity<TrainerProfileDto> response = trainerController.updateTrainer(dto, "pwd");
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(profile, response.getBody());
+        mockMvc.perform(put("/trainer/profile")
+                        .param("password", "pwd")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(content().json(om.writeValueAsString(profile)));
     }
 
     @Test
-    void updateTrainer_ShouldReturnNotFound_WhenInvalid() {
+    void updateTrainer_ShouldReturnNotFound_WhenRuntimeException() throws Exception {
         TrainerUpdateDto dto = new TrainerUpdateDto("jane", "Jane", "Smith", "Yoga", true);
+        when(trainerService.updateTrainerProfile(dto, "pwd")).thenThrow(new RuntimeException("nope"));
 
-        when(trainerService.updateTrainerProfile(dto, "pwd")).thenThrow(RuntimeException.class);
-
-        ResponseEntity<TrainerProfileDto> response = trainerController.updateTrainer(dto, "pwd");
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        mockMvc.perform(put("/trainer/profile")
+                        .param("password", "pwd")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(dto)))
+                .andExpect(status().isNotFound());
     }
 
+    /* -------------------- /trainer/unassigned -------------------- */
+
     @Test
-    void getUnassignedTrainers_ShouldReturnList_WhenValid() {
+    void getUnassignedTrainers_ShouldReturnList_WhenValid() throws Exception {
         List<TrainerForTrainerListDto> list = Collections.singletonList(
-            new TrainerForTrainerListDto("john", "John", "Doe", "Strength")
+                new TrainerForTrainerListDto("john", "John", "Doe", "Strength")
         );
 
         when(trainerService.getUnassignedTrainersForTrainee("trainee1", "pwd")).thenReturn(list);
 
-        ResponseEntity<List<TrainerForTrainerListDto>> response = trainerController.getUnassignedTrainers("trainee1", "pwd");
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(list, response.getBody());
+        mockMvc.perform(get("/trainer/unassigned")
+                        .param("username", "trainee1")
+                        .param("password", "pwd"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(om.writeValueAsString(list)));
     }
 
     @Test
-    void getUnassignedTrainers_ShouldReturnNotFound_WhenInvalid() {
-        when(trainerService.getUnassignedTrainersForTrainee("trainee1", "pwd")).thenThrow(RuntimeException.class);
+    void getUnassignedTrainers_ShouldReturnNotFound_WhenRuntimeException() throws Exception {
+        when(trainerService.getUnassignedTrainersForTrainee("trainee1", "pwd"))
+                .thenThrow(new RuntimeException("no trainee"));
 
-        ResponseEntity<List<TrainerForTrainerListDto>> response = trainerController.getUnassignedTrainers("trainee1", "pwd");
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        mockMvc.perform(get("/trainer/unassigned")
+                        .param("username", "trainee1")
+                        .param("password", "pwd"))
+                .andExpect(status().isNotFound());
     }
 
+    /* -------------------- /trainer/trainings -------------------- */
+
     @Test
-    void getTrainerTrainings_ShouldReturnList_WhenValid() {
+    void getTrainerTrainings_ShouldReturnList_WhenValid() throws Exception {
         List<TrainerTrainingResponseDto> list = List.of(
-                new TrainerTrainingResponseDto("Workout", LocalDate.now(), "Cardio", 60L, "Trainee Name")
+                new TrainerTrainingResponseDto("Workout", LocalDate.of(2025, 8, 12), "Cardio", 60L, "Trainee Name")
         );
-        when(trainerService.getTrainerTrainingsList(any(), eq("pwd"))).thenReturn(list);
 
-        ResponseEntity<List<TrainerTrainingResponseDto>> response = trainerController.getTrainerTrainings("trainer1", null, null, null, "pwd");
+        when(trainerService.getTrainerTrainingsList(
+                ArgumentMatchers.any(TrainerTrainingRequestDto.class), eq("pwd"))).thenReturn(list);
 
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals(list, response.getBody());
+        mockMvc.perform(get("/trainer/trainings")
+                        .param("username", "trainer1")
+                        .param("password", "pwd"))
+                .andExpect(status().isOk())
+                .andExpect(content().json(om.writeValueAsString(list)));
     }
 
     @Test
-    void getTrainerTrainings_ShouldReturnNotFound_WhenInvalid() {
-        when(trainerService.getTrainerTrainingsList(any(), eq("pwd"))).thenThrow(RuntimeException.class);
+    void getTrainerTrainings_ShouldReturnNotFound_WhenRuntimeException() throws Exception {
+        when(trainerService.getTrainerTrainingsList(any(), eq("pwd")))
+                .thenThrow(new RuntimeException("no trainings"));
 
-        ResponseEntity<List<TrainerTrainingResponseDto>> response = trainerController.getTrainerTrainings("trainer1", null, null, null, "pwd");
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        mockMvc.perform(get("/trainer/trainings")
+                        .param("username", "trainer1")
+                        .param("password", "pwd"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
-    void toggleTrainerActive_ShouldReturnSuccess_WhenValid() {
+    void getTrainerTrainings_ShouldReturnBadRequest_WhenInvalidDate() throws Exception {
+        // Your handler has a dedicated DateTimeParseException mapping -> 400 + plain message
+        mockMvc.perform(get("/trainer/trainings")
+                        .param("username", "trainer1")
+                        .param("password", "pwd")
+                        .param("periodFrom", "12-08-2025")) // invalid (expects ISO yyyy-MM-dd)
+                .andExpect(status().isBadRequest());
+    }
+
+    /* -------------------- /trainer/activate -------------------- */
+
+    @Test
+    void toggleTrainerActive_ShouldReturnOk_WhenValid() throws Exception {
         TrainerActivationDto dto = new TrainerActivationDto("trainer1", true);
 
-        ResponseEntity<String> response = trainerController.toggleTrainerActive(dto, "pwd");
+        mockMvc.perform(patch("/trainer/activate")
+                        .param("password", "pwd")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Trainer trainer1 is now active"));
 
         verify(trainerService).toggleActive("trainer1", true, "pwd");
-        assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
-    void toggleTrainerActive_ShouldReturnNotFound_WhenError() {
+    void toggleTrainerActive_ShouldReturnNotFound_WhenRuntimeException() throws Exception {
         TrainerActivationDto dto = new TrainerActivationDto("trainer1", true);
-        doThrow(RuntimeException.class).when(trainerService).toggleActive(any(), anyBoolean(), any());
+        doThrow(new RuntimeException("not found"))
+                .when(trainerService).toggleActive(any(), anyBoolean(), any());
 
-        ResponseEntity<String> response = trainerController.toggleTrainerActive(dto, "pwd");
-
-        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        mockMvc.perform(patch("/trainer/activate")
+                        .param("password", "pwd")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(om.writeValueAsString(dto)))
+                .andExpect(status().isNotFound());
     }
 }

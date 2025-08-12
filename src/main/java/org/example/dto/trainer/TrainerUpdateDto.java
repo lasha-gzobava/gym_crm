@@ -1,6 +1,7 @@
 package org.example.dto.trainer;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,6 @@ public class TrainerUpdateDto {
     // Specialization is read-only
     private String specialization;
 
-    @NotBlank(message = "isActive status is required")
+    @NotNull(message = "isActive status is required")
     private Boolean isActive;
 }
