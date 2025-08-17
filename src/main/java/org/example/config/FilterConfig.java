@@ -1,4 +1,4 @@
-package org.example.gymcrm.config;
+package org.example.config;
 
 import org.example.util.TxIdFilter;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;

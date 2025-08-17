@@ -9,20 +9,20 @@ import java.util.Objects;
 @NoArgsConstructor
 @Data
 @Entity
-@Table(name = "trainer") // Explicit table name (if your DB uses lowercase or snake_case)
+@Table(name = "trainer")
 public class Trainer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "trainerid") // Match DB column name exactly
+    @Column(name = "trainerid")
     private Long trainerId;
 
     @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "trainingtypeid", nullable = false) // Match DB column name
+    @JoinColumn(name = "trainingtypeid", nullable = false)
     private TrainingType specialization;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "userid", nullable = false, unique = true) // Match DB column name
+    @JoinColumn(name = "userid", nullable = false, unique = true)
     private User user;
 
     public Trainer(TrainingType specialization, User user) {

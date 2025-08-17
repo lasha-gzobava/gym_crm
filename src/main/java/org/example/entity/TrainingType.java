@@ -12,10 +12,10 @@ public class TrainingType {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "trainingtypeid") // maps to your DB column exactly
+    @Column(name = "trainingtypeid")
     private long trainingTypeId;
 
-    @Column(name = "trainingtypename", nullable = false, unique = true) // maps to your DB column exactly
+    @Column(name = "trainingtypename", nullable = false, unique = true)
     private String trainingTypeName;
 
     public TrainingType(long l, String trainingTypeName) {

@@ -11,35 +11,35 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Data
 @Entity
-@Table(name = "training") // specify table name
+@Table(name = "training")
 public class Training {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "trainingid") // match your DB column name exactly
+    @Column(name = "trainingid")
     private Long trainingId;
 
     @ManyToOne
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "traineeid", nullable = false) // match DB
+    @JoinColumn(name = "traineeid", nullable = false)
     private Trainee trainee;
 
     @ManyToOne
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @JoinColumn(name = "trainerid", nullable = false) // match DB
+    @JoinColumn(name = "trainerid", nullable = false)
     private Trainer trainer;
 
-    @Column(name = "trainingname", nullable = false) // match DB
+    @Column(name = "trainingname", nullable = false)
     private String trainingName;
 
     @ManyToOne
-    @JoinColumn(name = "trainingtypeid") // match DB
+    @JoinColumn(name = "trainingtypeid")
     private TrainingType trainingType;
 
-    @Column(name = "trainingdate", nullable = false) // match DB
+    @Column(name = "trainingdate", nullable = false)
     private LocalDate trainingDate;
 
-    @Column(name = "trainingduration", nullable = false) // match DB
+    @Column(name = "trainingduration", nullable = false)
     private Long trainingDuration;
 
     public Training(
