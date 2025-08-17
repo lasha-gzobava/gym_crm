@@ -4,7 +4,7 @@
 
 # Gym Training Management System
 
-A **Spring Boot**-based REST API for managing trainees, trainers, trainings, and user accounts. The system handles authentication, active status toggling, profile updates, and training schedules — all built on a secure and modular layered architecture.
+A **Spring**-based REST API for managing trainees, trainers, trainings, and user accounts. The system handles authentication, active status toggling, profile updates, and training schedules — all built on a secure and modular layered architecture.
 
 ---
 
