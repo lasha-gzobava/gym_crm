@@ -13,8 +13,9 @@ import org.springframework.web.client.RestClient;
 
 import java.time.Duration;
 
+//We don't have one but still :)
 @Component("externalApi")
-@ConditionalOnProperty(name = "health.external-api.url") // only registers when property is present
+@ConditionalOnProperty(name = "health.external-api.url")
 public class ExternalApiHealth extends AbstractHealthIndicator {
     private static final Logger log = LoggerFactory.getLogger(ExternalApiHealth.class);
 
@@ -25,12 +26,12 @@ public class ExternalApiHealth extends AbstractHealthIndicator {
         this.url = url;
 
         var rf = new SimpleClientHttpRequestFactory();
-        // If your IDE complains, use milliseconds: 1000 / 2000
+
         rf.setConnectTimeout(Duration.ofSeconds(1));
         rf.setReadTimeout(Duration.ofSeconds(2));
 
         this.client = RestClient.builder()
-                .requestFactory(rf)  // or .requestFactory(() -> rf)
+                .requestFactory(rf)
                 .build();
     }
 
@@ -45,7 +46,6 @@ public class ExternalApiHealth extends AbstractHealthIndicator {
                 builder.down().withDetail("url", url).withDetail("status", code.value());
             }
         } catch (Exception ex) {
-            // keep logs quiet in dev; details still appear in /actuator/health
             log.debug("externalApi health failed: {}", ex.toString());
             builder.down()
                     .withDetail("url", url)
