@@ -10,7 +10,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
+import javax.naming.AuthenticationException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -73,6 +75,8 @@ public class GlobalExceptionHandler {
         if (txId != null) body.put("txId", txId);
         return body;
     }
+
+
 
     @ExceptionHandler(java.time.format.DateTimeParseException.class)
     public ResponseEntity<String> handleDateTimeParse(java.time.format.DateTimeParseException ex) {
