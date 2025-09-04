@@ -17,9 +17,9 @@ public class FilterConfig {
         FilterRegistrationBean<TxIdFilter> reg = new FilterRegistrationBean<>();
         reg.setFilter(new TxIdFilter());
         reg.addUrlPatterns("/*");
-        // capture REQUEST + ASYNC + FORWARD (and ERROR if you want it on error pages too)
+        // capture REQUEST + ASYNC + FORWARD
         reg.setDispatcherTypes(EnumSet.of(DispatcherType.REQUEST, DispatcherType.ASYNC, DispatcherType.FORWARD));
-        // Run early so every log line has the txId (earlier than Spring Security if you use it)
+        // Run early so every log line has the txId
         reg.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return reg;
     }
