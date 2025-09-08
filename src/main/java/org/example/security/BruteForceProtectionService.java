@@ -22,17 +22,17 @@ public class BruteForceProtectionService {
 
     public void registerLoginFailure(String username) {
         if (username == null) return;
-        final String u = username.toLowerCase();
-        Attempt a = state.computeIfAbsent(username.toLowerCase(), k -> new Attempt());
-        if (a.lockUntil != null && Instant.now().isBefore(a.lockUntil)) {
-            log.debug("[BF] failure for '{}' but already locked until {}", u, a.lockUntil);
+        final String usernameLowerCase = username.toLowerCase();
+        Attempt attempt = state.computeIfAbsent(username.toLowerCase(), k -> new Attempt());
+        if (attempt.lockUntil != null && Instant.now().isBefore(attempt.lockUntil)) {
+            log.debug("[BF] failure for '{}' but already locked until {}", usernameLowerCase, attempt.lockUntil);
             return;
         }
-        a.count++;
-        log.debug("[BF] failure for '{}': count={}/{}", u, a.count, MAX_ATTEMPTS);
-        if (a.count >= MAX_ATTEMPTS) {
-            a.lockUntil = Instant.now().plusSeconds(LOCK_SECONDS);
-            log.debug("[BF] '{}' LOCKED until {}", u, a.lockUntil);
+        attempt.count++;
+        log.debug("[BF] failure for '{}': count={}/{}", usernameLowerCase, attempt.count, MAX_ATTEMPTS);
+        if (attempt.count >= MAX_ATTEMPTS) {
+            attempt.lockUntil = Instant.now().plusSeconds(LOCK_SECONDS);
+            log.debug("[BF] '{}' LOCKED until {}", usernameLowerCase, attempt.lockUntil);
         }
     }
 
