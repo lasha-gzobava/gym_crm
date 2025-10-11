@@ -30,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             chain.doFilter(request, response);
             return;
@@ -38,8 +39,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = authHeader.substring(7);
 
         try {
-            // ✅ Handle both user and system tokens
-            if (jwtService.isTokenValid(token)) {
+            // ✅ Validate token once
+            boolean valid = jwtService.isTokenValid(token);
+
+            if (!valid) {
+                log.warn("❌ Invalid or expired JWT token");
+                chain.doFilter(request, response);  // continue filter chain
+                return;
+            }
+
+            // ✅ Handle system-issued tokens (no username needed)
+            if ("gym-crm-service".equalsIgnoreCase(jwtService.extractUsername(token))) {
                 log.info("✅ Authorized system token from gym-crm-service");
                 var auth = new UsernamePasswordAuthenticationToken(
                         "gym-crm-service", null, Collections.emptyList());
@@ -49,12 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            if (!jwtService.isTokenValid(token)) {
-                log.warn("❌ Invalid or expired JWT token");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
-            }
-
+            // ✅ Normal user token
             String username = jwtService.extractUsername(token);
             var auth = new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -63,8 +68,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
 
         } catch (Exception e) {
-            log.error("❌ JWT validation error: {}", e.getMessage());
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            log.error("⚠️ JWT validation error: {}", e.getMessage());
+            chain.doFilter(request, response); // still continue chain
         }
     }
 }

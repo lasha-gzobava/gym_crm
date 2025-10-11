@@ -25,8 +25,11 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Allow only specific endpoints (for example, health or registration)
-                        .requestMatchers("/actuator/**").permitAll()
+                        // Allow only specific endpoints
+                        .requestMatchers( "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/actuator/**").permitAll()
                         // everything else requires authentication
                         .anyRequest().authenticated()
                 )

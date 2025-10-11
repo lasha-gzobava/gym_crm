@@ -1,4 +1,4 @@
-package org.example.trainerworkloadms;
+package org.example.trainerworkloadms.service;
 
 import org.example.trainerworkloadms.dto.TrainingEventRequest;
 import org.example.trainerworkloadms.dto.TrainingEventResponse;
@@ -6,7 +6,6 @@ import org.example.trainerworkloadms.entity.Month;
 import org.example.trainerworkloadms.entity.Trainer;
 import org.example.trainerworkloadms.entity.Year;
 import org.example.trainerworkloadms.repository.TrainerRepository;
-import org.example.trainerworkloadms.service.WorkloadService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +17,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
