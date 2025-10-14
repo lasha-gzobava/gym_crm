@@ -43,14 +43,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             boolean valid = jwtService.isTokenValid(token);
 
             if (!valid) {
-                log.warn("❌ Invalid or expired JWT token");
+                log.warn(" Invalid or expired JWT token");
                 chain.doFilter(request, response);  // continue filter chain
                 return;
             }
 
-            // ✅ Handle system-issued tokens (no username needed)
+            //  Handle system-issued tokens (no username needed)
             if ("gym-crm-service".equalsIgnoreCase(jwtService.extractUsername(token))) {
-                log.info("✅ Authorized system token from gym-crm-service");
+                log.info(" Authorized system token from gym-crm-service");
                 var auth = new UsernamePasswordAuthenticationToken(
                         "gym-crm-service", null, Collections.emptyList());
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -59,7 +59,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            // ✅ Normal user token
+            //  Normal user token
             String username = jwtService.extractUsername(token);
             var auth = new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -68,7 +68,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             chain.doFilter(request, response);
 
         } catch (Exception e) {
-            log.error("⚠️ JWT validation error: {}", e.getMessage());
+            log.error(" JWT validation error: {}", e.getMessage());
             chain.doFilter(request, response); // still continue chain
         }
     }

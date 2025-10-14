@@ -32,7 +32,7 @@ public class WorkLoadController {
     )
     @PostMapping
     public ResponseEntity<TrainingEventResponse> accept(@RequestBody TrainingEventRequest request) {
-        log.info("Received training event request: {}", request);
+        log.info("----> Received training event request: {}", request);
         TrainingEventResponse response = workloadService.apply(request);
         log.info("Training event processed successfully");
         return ResponseEntity.ok(response);

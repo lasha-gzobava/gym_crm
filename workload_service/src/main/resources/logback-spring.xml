@@ -1,9 +1,20 @@
 <configuration>
+
+    <!-- Let Spring resolve a level pattern we can reuse -->
+    <springProperty scope="context"
+                    name="LOG_LEVEL_PATTERN"
+                    source="logging.pattern.level"
+                    defaultValue="%5p [traceId=%X{traceId:-}, spanId=%X{spanId:-}]"/>
+
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} %-5level tx=%X{txId} [%thread] %logger{36} - %msg%n</pattern>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--  INCLUDE the MDC keys here -->
+            <pattern>
+                %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] ${LOG_LEVEL_PATTERN} %logger - %msg%n
+            </pattern>
         </encoder>
     </appender>
+
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>

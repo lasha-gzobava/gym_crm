@@ -25,8 +25,11 @@ public class TrainingController {
             @Valid @RequestBody TrainingAddDto dto,
             @RequestParam String password
     ) {
-        log.info("Adding training for trainee: {} by trainer: {}", dto.getTraineeUsername(), dto.getTrainerUsername());
-        trainingService.addTraining(dto, password);
-        return ResponseEntity.ok("Training successfully added");
+        boolean success = trainingService.addTraining(dto, password);
+        if (success) {
+            return ResponseEntity.ok("Training successfully added");
+        } else {
+            return ResponseEntity.accepted().body("Training saved locally, but workload service unavailable — will retry later.");
+        }
     }
 }

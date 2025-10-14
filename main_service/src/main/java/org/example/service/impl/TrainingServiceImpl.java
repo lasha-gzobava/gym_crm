@@ -40,15 +40,19 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     @Transactional
-    public void addTraining(TrainingAddDto dto, String password) {
+    public boolean addTraining(TrainingAddDto dto, String password) {
 
+        // Authenticate trainer
         userService.authenticate(dto.getTrainerUsername(), password);
+
+        // Validate trainee and trainer
         Trainee trainee = traineeRepository.findByUsername(dto.getTraineeUsername())
                 .orElseThrow(() -> new RuntimeException("Trainee not found"));
 
         Trainer trainer = trainerRepository.findByUsername(dto.getTrainerUsername())
                 .orElseThrow(() -> new RuntimeException("Trainer not found"));
 
+        // Save training locally
         Training training = new Training();
         training.setTrainee(trainee);
         training.setTrainer(trainer);
@@ -56,10 +60,10 @@ public class TrainingServiceImpl implements TrainingService {
         training.setTrainingDate(dto.getTrainingDate());
         training.setTrainingDuration(dto.getTrainingDuration());
         training.setTrainingType(trainer.getSpecialization());
-
-
         trainingRepository.save(training);
 
+
+        // Prepare event payload
         TrainingEventRequest event = new TrainingEventRequest();
         event.setUsername(training.getTrainer().getUser().getUsername());
         event.setFirstName(training.getTrainer().getUser().getFirstName());
@@ -69,11 +73,21 @@ public class TrainingServiceImpl implements TrainingService {
         event.setDurationMinutes(training.getTrainingDuration().intValue()); // convert Long → int
         event.setAction(TrainingEventRequest.ActionType.ADD);
 
+        // Generate system token for inter-service auth
         String systemToken = jwtService.generateSystemToken();
 
+        // Send event to workload service
+        boolean success = workloadClient.sendEvent(event, systemToken);
 
+        // Log and return status
+        if (success) {
+            log.info(" Workload service successfully updated for trainer: {}", trainer.getUser().getUsername());
+        } else {
+            log.warn("️ Workload service unavailable — training saved locally for trainer: {}", trainer.getUser().getUsername());
+        }
         workloadClient.sendEvent(event, systemToken);
 
+        return success;
     }
 
 

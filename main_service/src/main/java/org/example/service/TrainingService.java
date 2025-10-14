@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface TrainingService {
 
-    void addTraining(TrainingAddDto dto, String password);
+    boolean addTraining(TrainingAddDto dto, String password);
 
 
     List<TrainingDto> getTrainingsForTrainee(String username, String password);
