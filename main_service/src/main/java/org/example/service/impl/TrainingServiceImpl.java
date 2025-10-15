@@ -13,7 +13,6 @@ import org.example.mapper.TrainingMapper;
 import org.example.repository.TraineeRepository;
 import org.example.repository.TrainerRepository;
 import org.example.repository.TrainingRepository;
-import org.example.repository.TrainingTypeRepository;
 import org.example.security.JwtService;
 import org.example.service.TrainingService;
 import org.example.service.UserService;
@@ -32,11 +31,12 @@ public class TrainingServiceImpl implements TrainingService {
     private final TrainingRepository trainingRepository;
     private final TrainerRepository trainerRepository;
     private final TraineeRepository traineeRepository;
-    private final TrainingTypeRepository trainingTypeRepository;
     private final TrainingMapper trainingMapper;
     private final UserService userService;
     private final WorkloadClient workloadClient;
     private final JwtService jwtService;
+    private final MessageProducer messageProducer;
+
 
     @Override
     @Transactional
@@ -73,21 +73,16 @@ public class TrainingServiceImpl implements TrainingService {
         event.setDurationMinutes(training.getTrainingDuration().intValue()); // convert Long → int
         event.setAction(TrainingEventRequest.ActionType.ADD);
 
-        // Generate system token for inter-service auth
-        String systemToken = jwtService.generateSystemToken();
-
-        // Send event to workload service
-        boolean success = workloadClient.sendEvent(event, systemToken);
-
-        // Log and return status
-        if (success) {
-            log.info(" Workload service successfully updated for trainer: {}", trainer.getUser().getUsername());
-        } else {
-            log.warn("️ Workload service unavailable — training saved locally for trainer: {}", trainer.getUser().getUsername());
+        // Publish asynchronously via ActiveMQ
+        try {
+            messageProducer.sendTrainingEvent(event);
+            log.info("📤 Training event published to queue for trainer: {}", trainer.getUser().getUsername());
+            return true;
+        } catch (Exception e) {
+            log.error("❌ Failed to publish training event for trainer {}: {}", trainer.getUser().getUsername(), e.getMessage());
+            return false;
         }
-        workloadClient.sendEvent(event, systemToken);
 
-        return success;
     }
 
 

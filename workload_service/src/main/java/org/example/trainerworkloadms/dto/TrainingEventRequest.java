@@ -24,7 +24,7 @@ public class TrainingEventRequest {
 
     Boolean isActive;
 
-    @NotBlank(message = "Training date cannot be blank")
+    @NotNull(message = "Training date cannot be blank")
     LocalDate trainingDate;
     @Positive(message = "Duration must be positive")
     int durationMinutes;
