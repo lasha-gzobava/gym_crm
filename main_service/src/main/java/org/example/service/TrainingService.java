@@ -1,7 +1,6 @@
 package org.example.service;
 
 import org.example.dto.training.TrainingAddDto;
-import org.example.dto.training.TrainingCreateDto;
 import org.example.dto.training.TrainingDto;
 
 import java.time.LocalDate;

@@ -2,13 +2,14 @@ package org.example.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.example.dto.trainee.*;
 import org.example.dto.trainer.TrainerForTrainerListDto;
 import org.example.dto.trainer.TrainerInfoDto;
 import org.example.dto.training.TraineeTrainingRequestDto;
 import org.example.dto.training.TraineeTrainingResponseDto;
-import org.example.entity.*;
+import org.example.entity.Trainee;
+import org.example.entity.Trainer;
+import org.example.entity.User;
 import org.example.repository.TraineeRepository;
 import org.example.repository.TrainerRepository;
 import org.example.repository.TrainingRepository;

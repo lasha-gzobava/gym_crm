@@ -6,10 +6,11 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.example.trainerworkloadms.dto.TrainingEventRequest;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.jms.annotation.EnableJms;
+import org.springframework.jms.core.JmsTemplate;
 import org.springframework.jms.config.DefaultJmsListenerContainerFactory;
 import org.springframework.jms.support.converter.MappingJackson2MessageConverter;
 import org.springframework.jms.support.converter.MessageConverter;
@@ -30,15 +31,15 @@ public class JmsConfig {
     @Value("${app.queue.training.dlq:training.dlq}")
     private String deadLetterQueue;
 
-    private final ApplicationContext context;
+    private final JmsTemplate jmsTemplate;
 
-    public JmsConfig(ApplicationContext context) {
-        this.context = context;
+    public JmsConfig(@Lazy JmsTemplate jmsTemplate) {
+        this.jmsTemplate = jmsTemplate;
     }
 
     @PostConstruct
     public void logQueues() {
-        log.info("📦 ActiveMQ Queues configured:");
+        log.info(" ActiveMQ Queues configured:");
         log.info("  • training queue: {}", trainingQueue);
         log.info("  • dead-letter queue: {}", deadLetterQueue);
     }
@@ -62,12 +63,10 @@ public class JmsConfig {
         return converter;
     }
 
-
     @Bean
     public DefaultJmsListenerContainerFactory jmsListenerContainerFactory(
             ConnectionFactory connectionFactory,
-            MessageConverter messageConverter,
-            ObjectMapper objectMapper
+            MessageConverter messageConverter
     ) {
         DefaultJmsListenerContainerFactory factory = new DefaultJmsListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
@@ -78,8 +77,7 @@ public class JmsConfig {
         factory.setErrorHandler(t -> {
             log.error(" JMS listener failed: {}", t.getMessage(), t);
             try {
-                var jmsTemplate = context.getBean(org.springframework.jms.core.JmsTemplate.class);
-                String payload = objectMapper.writeValueAsString(Map.of(
+                String payload = objectMapper().writeValueAsString(Map.of(
                         "error", t.getMessage(),
                         "exception", t.getClass().getSimpleName(),
                         "timestamp", LocalDateTime.now().toString()

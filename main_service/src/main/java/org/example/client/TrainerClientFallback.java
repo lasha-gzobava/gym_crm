@@ -2,6 +2,7 @@ package org.example.client;
 
 import org.example.dto.trainer.TrainingEventResponse;
 import org.springframework.stereotype.Component;
+
 import java.util.List;
 
 @Component

@@ -1,8 +1,10 @@
 package org.example.service;
 
 import org.example.dto.trainee.TraineeCredentialsDto;
-import org.example.dto.trainer.*;
-import org.example.dto.login.PasswordChangeDto;
+import org.example.dto.trainer.TrainerCreateDto;
+import org.example.dto.trainer.TrainerForTrainerListDto;
+import org.example.dto.trainer.TrainerProfileDto;
+import org.example.dto.trainer.TrainerUpdateDto;
 import org.example.dto.training.TrainerTrainingRequestDto;
 import org.example.dto.training.TrainerTrainingResponseDto;
 

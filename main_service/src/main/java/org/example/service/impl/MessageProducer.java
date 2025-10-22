@@ -1,11 +1,11 @@
 package org.example.service.impl;
 
 
-import org.springframework.jms.support.converter.MessageConverter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.dto.training.TrainingEventRequest;
 import org.springframework.jms.core.JmsTemplate;
+import org.springframework.jms.support.converter.MessageConverter;
 import org.springframework.stereotype.Service;
 
 @Service

@@ -2,6 +2,7 @@ package org.example.controller;
 
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,15 +13,12 @@ import org.example.dto.training.TraineeTrainingResponseDto;
 import org.example.service.TraineeService;
 import org.example.service.TrainingService;
 import org.example.service.UserService;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/trainee")
